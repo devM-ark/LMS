@@ -27,6 +27,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
     if(out.error){ errEl.textContent = out.error; return; }
     SESSION = out;
     sessionStorage.setItem('lm_session', JSON.stringify(out));
+    e.target.reset();
     enterApp();
   }catch(err){ errEl.textContent = 'Could not reach the server.'; }
   finally { btn.disabled = false; }
@@ -38,6 +39,8 @@ document.getElementById('logoutBtn').addEventListener('click', ()=>{
   document.getElementById('mainApp').style.display='none';
   document.getElementById('tabbar').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('loginForm').reset();
+  document.getElementById('borrowerLoginForm')?.reset();
 });
 
 document.getElementById('whoamiText').addEventListener('click', ()=>{

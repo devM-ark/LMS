@@ -33,6 +33,7 @@ document.getElementById('borrowerLoginForm').addEventListener('submit', async (e
     if(out.error){ errEl.textContent = out.error; return; }
     BORROWER_SESSION = out;
     sessionStorage.setItem('lm_borrower_session', JSON.stringify(out));
+    e.target.reset();
     if(out.mustChangePassword){
       document.getElementById('loginScreen').style.display = 'none';
       document.getElementById('borrowerChangePasswordScreen').style.display = 'flex';
@@ -62,6 +63,7 @@ document.getElementById('borrowerForcedChangeForm').addEventListener('submit', a
     if(out.error){ errEl.textContent = out.error; return; }
     BORROWER_SESSION.mustChangePassword = false;
     sessionStorage.setItem('lm_borrower_session', JSON.stringify(BORROWER_SESSION));
+    e.target.reset();
     document.getElementById('borrowerChangePasswordScreen').style.display = 'none';
     enterBorrowerPortal();
   }catch(err){ errEl.textContent = 'Could not reach the server.'; }
@@ -100,8 +102,9 @@ async function enterBorrowerPortal(){
   document.getElementById('borrowerChangePasswordScreen').style.display = 'none';
   document.getElementById('borrowerPortal').style.display = 'block';
   document.getElementById('borrowerGreeting').textContent = `Good day, ${BORROWER_SESSION.firstName} ${BORROWER_SESSION.lastName}`;
+  document.getElementById('borrowerWhoamiText').textContent = `${BORROWER_SESSION.firstName} ${BORROWER_SESSION.lastName} • Borrower`;
   const contentEl = document.getElementById('borrowerSOAContent');
-  contentEl.innerHTML = '<div class="empty">Loading your statement…</div>';
+  contentEl.innerHTML = '<div class="empty">Please wait while we prepare your Statement of Account.</div>';
   const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({action:'getMySOA', username: BORROWER_SESSION.username})});
   const soa = await res.json();
   if(soa.error){ contentEl.innerHTML = `<div class="err">${soa.error}</div>`; return; }
@@ -113,6 +116,8 @@ function borrowerLogout(){
   sessionStorage.removeItem('lm_borrower_session');
   document.getElementById('borrowerPortal').style.display = 'none';
   document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('borrowerLoginForm').reset();
+  document.getElementById('loginForm')?.reset();
   setLoginMode('borrower');
 }
 

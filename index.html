@@ -63,19 +63,15 @@
 </div>
 
 <div id="borrowerPortal" style="display:none;">
-  <header class="top">
-    <div>
-      <h1 id="borrowerGreeting">Good day</h1>
-      <div class="tag" style="margin:0;">Statement of Account</div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;">
+  <header class="top borrower-header">
+    <h1 id="borrowerGreeting">Good day</h1>
+    <div class="whoami">
+      <span id="borrowerWhoamiText" class="whoami-btn" style="cursor:default;"></span>
       <button class="btn small ghost" onclick="openBorrowerChangePasswordModal()">Change Password</button>
-      <button class="btn small" id="borrowerLogoutBtn" onclick="borrowerLogout()">Sign out</button>
+      <button id="borrowerLogoutBtn" onclick="borrowerLogout()">Sign out</button>
     </div>
   </header>
-  <div class="app">
-    <div class="card wide" id="borrowerSOAContent"></div>
-  </div>
+  <div class="borrower-soa-wrap" id="borrowerSOAContent"></div>
 </div>
 
 <div class="modal-backdrop" id="borrowerChangePasswordModal">

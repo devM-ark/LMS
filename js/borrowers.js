@@ -1,3 +1,9 @@
+/**
+ * borrowers.js — Masterlist table rendering, the Add/Edit Borrower
+ * modals (including the loan-type/amount/cutoff auto-fill logic), and
+ * the Statement of Account (SOA) view.
+ */
+
 function renderBorrowersTable(){
   const mtbody = document.querySelector('#masterlistTable tbody');
   if(!mtbody || !STATE) return;
@@ -126,7 +132,8 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
   btn.textContent = 'Saving…';
   const data = Object.fromEntries(new FormData(e.target));
   const msgEl = document.getElementById('borrowerMsg');
-  msgEl.textContent = '';
+  msgEl.textContent = 'Please wait while we save the borrower.';
+  msgEl.style.color = 'var(--muted)';
   try{
     const out = await postAction('addBorrower', {data});
     if(out){
@@ -136,6 +143,8 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
       await loadData();
       refreshLoanTypeOptionsForGroup();
       closeModal('addBorrowerModal');
+    } else {
+      msgEl.textContent = '';
     }
   } finally { btn.disabled = false; btn.textContent = originalLabel; }
 });
@@ -158,6 +167,31 @@ function openEdit(id){
   ['Borrower ID','Last Name','First Name','Loan Type','Loan Amount','Term (Months)','Amount/Cut-off','Release Date','Contact Number','Address']
     .forEach(k => { if(form[k]) form[k].value = b[k] ?? ''; });
   openModal('editModal');
+  loadLoginInfoForEdit(id);
+}
+
+let editingBorrowerId = null;
+async function loadLoginInfoForEdit(id){
+  editingBorrowerId = id;
+  const block = document.getElementById('loginInfoBlock');
+  const textEl = document.getElementById('loginInfoText');
+  if(!block || !isAdmin() || !API_URL) return;
+  block.style.display = '';
+  textEl.textContent = 'Loading…';
+  const out = await postAction('getBorrowerLoginInfo', {borrowerId: id});
+  if(!out || out.error){ textEl.textContent = 'No login account yet — one is created automatically when the borrower is added.'; return; }
+  textEl.innerHTML = `Username: <b>${out.username}</b>` + (out.mustChangePassword ? ' <span style="color:var(--muted);">(has not changed default password yet)</span>' : '');
+}
+
+async function resetBorrowerLoginPassword(){
+  if(!editingBorrowerId) return;
+  if(!confirm('Reset this borrower\'s password back to the default (their last name)?')) return;
+  const out = await postAction('resetBorrowerPassword', {borrowerId: editingBorrowerId});
+  if(out && out.success){
+    document.getElementById('borrowerLoginInfoResultText').textContent = 'Password has been reset to the default. The borrower will be asked to set a new password on next login.';
+    openModal('borrowerLoginInfoResultModal');
+    loadLoginInfoForEdit(editingBorrowerId);
+  }
 }
 
 function openAddBorrowerModal(){
@@ -181,41 +215,7 @@ async function showSOA(id){
     soa = await res.json();
     if(soa.error){ alert(soa.error); return; }
   }
-  const b = soa.borrower, c = soa.computed;
-  document.getElementById('soaContent').innerHTML = `
-    <h3 style="margin:0;">Manalo's Lending Corporation Inc.</h3>
-    <div style="color:var(--muted);font-size:.75rem;">STATEMENT OF ACCOUNT — ${soa.soaNo}</div>
-    <h4>Borrower</h4>
-    <div>${b['Last Name']}, ${b['First Name']} &nbsp;•&nbsp; ID ${b['Borrower ID']}</div>
-    <div>${b['Loan Type']} &nbsp;•&nbsp; Released ${fmtDate(b['Release Date'])}</div>
-    <h4>Account Summary</h4>
-    <table>
-      <tr><td>Loan Amount</td><td>${fmt(b['Loan Amount'])}</td></tr>
-      <tr><td>Total Paid</td><td>${fmt(c.totalPaid)}</td></tr>
-      <tr><td>Outstanding Balance (full loan)</td><td>${fmt(c.balance)}</td></tr>
-      <tr><td>Amount Due This Cutoff</td><td>${fmt(c.cutoffAmountDue)}</td></tr>
-      <tr><td>${b['Loan Type']==='Add-on Diminishing' ? 'Next Due / Renewal' : (isBonusLoanType(b['Loan Type']) ? 'Maturity Date' : 'Next Due Date')}</td><td>${fmtDate(c.nextDue)}</td></tr>
-      <tr><td>Status</td><td>${c.status}</td></tr>
-    </table>
-    <h4>Payment History</h4>
-    <table>
-      <thead><tr><th>Date</th><th>OR No.</th><th>Amount</th><th>Mode</th></tr></thead>
-      <tbody>${(soa.payments||[]).length ? soa.payments.map(p=>`
-        <tr><td>${fmtDate(p['Payment Date'])}</td><td>${p['OR / Reference No.']}</td><td>${fmt(p['Amount Paid'])}</td><td>${p['Mode of Payment']}</td></tr>
-      `).join('') : '<tr><td colspan="4" class="empty">No payments recorded</td></tr>'}</tbody>
-    </table>
-    ${soa.schedule && soa.schedule.length ? `
-    <h4>Cutoff Schedule</h4>
-    <div class="schedule-wrap">
-    <table class="schedule-table">
-      <thead><tr><th>Due Date</th><th>Amount</th><th>Status</th></tr></thead>
-      <tbody>${soa.schedule.map(r=>`
-        <tr><td>${fmtDate(r.date)}</td><td>${fmt(r.amount)}</td><td><span class="status-pill status-${r.status.replace(/\s+/g,'-')}">${r.status}</span></td></tr>
-      `).join('')}</tbody>
-    </table>
-    </div>` : ''}
-    <div style="margin-top:16px;font-size:.72rem;color:var(--muted);">Generated ${fmtDate(soa.dateGenerated)}</div>
-  `;
+  document.getElementById('soaContent').innerHTML = buildSOAHTML(soa);
   openModal('soaModal');
 }
 

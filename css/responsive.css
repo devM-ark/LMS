@@ -1,6 +1,15 @@
 @media (max-width:720px){ .app{margin-left:64px;padding:0 14px 24px;} }
 
 @media (max-width:720px){
+  .borrower-soa-wrap{margin:16px auto;padding:16px;max-width:100%;font-size:.8rem;}
+  header.top.borrower-header{padding:16px 14px 12px;}
+  header.top.borrower-header h1{font-size:.95rem;}
+  header.top.borrower-header .whoami{font-size:.68rem;}
+  .borrower-soa-wrap table td:first-child{padding-right:14px;}
+  .borrower-soa-wrap table{font-size:.78rem;}
+}
+
+@media (max-width:720px){
   #masterlistTable{ table-layout:auto; width:max-content; min-width:100%; }
   #masterlistTable col{ width:auto !important; }
   #masterlistTable td, #masterlistTable th{ white-space:nowrap; overflow:visible; text-overflow:clip; padding:8px 10px; }

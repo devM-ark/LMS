@@ -3,7 +3,7 @@
   --ink:#1B1F23; --line:#DDD5C4; --good:#2E7D4F; --warn:#B8862E; --bad:#B23A32; --muted:#6B7178;
 }
 *{box-sizing:border-box;}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:'Georgia','Iowan Old Style',serif;}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:Arial,sans-serif;}
 
 .toast{
   position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-20px);
