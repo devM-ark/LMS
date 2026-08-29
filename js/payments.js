@@ -51,27 +51,37 @@ document.addEventListener('click', (e)=>{
   }
 });
 
-function buildReceiptHTML(payment, borrower){
+function buildReceiptCopy(payment, borrower, copyLabel){
   const companyName = (STATE?.settings && STATE.settings.CompanyName) || "Manalo's Lending Corporation";
   const name = payment['Borrower Name'] || (borrower ? `${borrower['Last Name']}, ${borrower['First Name']}` : String(payment['Borrower ID']));
   const loanType = borrower ? borrower['Loan Type'] : '—';
   return `
-    <div style="text-align:center;border-bottom:2px solid var(--gold);padding-bottom:12px;margin-bottom:14px;">
-      <div style="font-family:Georgia,serif;font-weight:bold;font-size:1.1rem;color:var(--navy);">${companyName}</div>
-      <div style="font-family:Arial,sans-serif;font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:2px;">Official Receipt</div>
-    </div>
-    <table style="width:100%;font-family:Arial,sans-serif;font-size:.85rem;border-collapse:collapse;">
-      <tr><td style="padding:5px 0;color:var(--muted);">OR No.</td><td style="padding:5px 0;text-align:right;font-weight:700;">${payment['OR / Reference No.']}</td></tr>
-      <tr><td style="padding:5px 0;color:var(--muted);">Date</td><td style="padding:5px 0;text-align:right;">${fmtDate(payment['Payment Date'])}</td></tr>
-      <tr><td style="padding:5px 0;color:var(--muted);">Borrower</td><td style="padding:5px 0;text-align:right;">${name}</td></tr>
-      <tr><td style="padding:5px 0;color:var(--muted);">Loan Type</td><td style="padding:5px 0;text-align:right;">${loanType}</td></tr>
-      <tr><td colspan="2" style="border-top:1px solid var(--line);padding-top:10px;"></td></tr>
-      <tr><td style="padding:5px 0;font-weight:700;color:var(--navy);">Amount Paid</td><td style="padding:5px 0;text-align:right;font-weight:700;color:var(--navy);font-size:1.1rem;">${fmt(payment['Amount Paid'])}</td></tr>
-      <tr><td style="padding:5px 0;color:var(--muted);">Mode of Payment</td><td style="padding:5px 0;text-align:right;">${payment['Mode of Payment']}</td></tr>
-      <tr><td style="padding:5px 0;color:var(--muted);">Received By</td><td style="padding:5px 0;text-align:right;">${payment['Received By'] || '—'}</td></tr>
-    </table>
-    <div style="text-align:center;font-size:.7rem;color:var(--muted);margin-top:16px;font-style:italic;">Thank you for your payment.</div>
-  `;
+    <div class="receipt-copy">
+      <div style="text-align:center;border-bottom:2px solid var(--gold);padding-bottom:8px;margin-bottom:10px;">
+        <div style="font-family:Georgia,serif;font-weight:bold;font-size:.95rem;color:var(--navy);">${companyName}</div>
+        <div style="font-family:Arial,sans-serif;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;">Official Receipt</div>
+        <div style="font-family:Arial,sans-serif;font-size:.62rem;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;font-weight:700;">${copyLabel}</div>
+      </div>
+      <table style="width:100%;font-family:Arial,sans-serif;font-size:.72rem;border-collapse:collapse;">
+        <tr><td style="padding:3px 0;color:var(--muted);">OR No.</td><td style="padding:3px 0;text-align:right;font-weight:700;">${payment['OR / Reference No.']}</td></tr>
+        <tr><td style="padding:3px 0;color:var(--muted);">Date</td><td style="padding:3px 0;text-align:right;">${fmtDate(payment['Payment Date'])}</td></tr>
+        <tr><td style="padding:3px 0;color:var(--muted);">Borrower</td><td style="padding:3px 0;text-align:right;">${name}</td></tr>
+        <tr><td style="padding:3px 0;color:var(--muted);">Loan Type</td><td style="padding:3px 0;text-align:right;">${loanType}</td></tr>
+        <tr><td colspan="2" style="border-top:1px solid var(--line);padding-top:6px;"></td></tr>
+        <tr><td style="padding:3px 0;font-weight:700;color:var(--navy);">Amount Paid</td><td style="padding:3px 0;text-align:right;font-weight:700;color:var(--navy);font-size:.9rem;">${fmt(payment['Amount Paid'])}</td></tr>
+        <tr><td style="padding:3px 0;color:var(--muted);">Mode of Payment</td><td style="padding:3px 0;text-align:right;">${payment['Mode of Payment']}</td></tr>
+        <tr><td style="padding:3px 0;color:var(--muted);">Received By</td><td style="padding:3px 0;text-align:right;">${payment['Received By'] || '—'}</td></tr>
+      </table>
+      <div style="text-align:center;font-size:.6rem;color:var(--muted);margin-top:10px;font-style:italic;">This receipt is system generated.</div>
+    </div>`;
+}
+
+function buildReceiptHTML(payment, borrower){
+  return `<div class="receipt-copies">
+    ${buildReceiptCopy(payment, borrower, 'Borrower Copy')}
+    <div class="receipt-divider"></div>
+    ${buildReceiptCopy(payment, borrower, 'Company Copy')}
+  </div>`;
 }
 
 function showReceipt(payment, borrower){
@@ -96,6 +106,8 @@ document.getElementById('paymentForm').addEventListener('submit', async (e)=>{
     return;
   }
   btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Saving…';
   const data = Object.fromEntries(new FormData(e.target));
   const msgEl = document.getElementById('paymentMsg');
   msgEl.textContent = '';
@@ -103,8 +115,6 @@ document.getElementById('paymentForm').addEventListener('submit', async (e)=>{
     const out = await postAction('addPayment', {data});
     if(out){
       showToast('✓ Payment recorded successfully.');
-      const borrower = (STATE?.borrowers||[]).find(b => String(b['Borrower ID']) === String(data['Borrower ID']));
-      const receiptPayment = Object.assign({}, data, { 'OR / Reference No.': out.orNumber });
       e.target.reset();
       document.getElementById('paymentBorrowerName').value = '';
       document.getElementById('paymentAmountInput').placeholder = '';
@@ -112,9 +122,8 @@ document.getElementById('paymentForm').addEventListener('submit', async (e)=>{
       document.getElementById('paymentReceivedByInput').value = SESSION.name;
       await loadData();
       closeModal('addPaymentModal');
-      showReceipt(receiptPayment, borrower);
     }
-  } finally { btn.disabled = false; }
+  } finally { btn.disabled = false; btn.textContent = originalLabel; }
 });
 
 let voidingInFlight = false;

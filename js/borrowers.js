@@ -139,6 +139,8 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
   const btn = e.target.querySelector('button[type=submit]');
   if(btn.disabled) return;
   btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Saving…';
   const data = Object.fromEntries(new FormData(e.target));
   const msgEl = document.getElementById('borrowerMsg');
   msgEl.textContent = '';
@@ -152,7 +154,7 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
       refreshLoanTypeOptionsForGroup();
       closeModal('addBorrowerModal');
     }
-  } finally { btn.disabled = false; }
+  } finally { btn.disabled = false; btn.textContent = originalLabel; }
 });
 
 document.getElementById('editForm').addEventListener('submit', async (e)=>{
