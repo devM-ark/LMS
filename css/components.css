@@ -45,8 +45,9 @@ form.stack input,form.stack select{width:100%;font-family:Arial,sans-serif;paddi
 form.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;}
 form.grid-2 label{margin-bottom:0;}
 form.grid-2 button{grid-column:1/-1;justify-self:end;min-width:180px;}
-#paymentForm button[type=submit]{grid-column:auto;align-self:end;justify-self:stretch;min-width:0;}
+#paymentForm button[type=submit]{justify-self:center;}
 #borrowerForm button[type=submit]{justify-self:center;}
+#staffForm button[type=submit]{justify-self:center;}
 form.grid-2 .err{grid-column:1/-1;}
 form.grid-2 .note{grid-column:1/-1;}
 form.grid-3{display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:start;}
@@ -82,13 +83,16 @@ form.grid-3 button{white-space:nowrap;}
 /* Borrower/Viewer self-service portal */
 header.top.borrower-header{flex-direction:column;align-items:center;text-align:center;gap:8px;}
 header.top.borrower-header h1{text-align:center;}
-header.top.borrower-header .whoami{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;text-align:left;}
+header.top.borrower-header .whoami{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap;text-align:left;width:100%;}
 .borrower-soa-wrap{max-width:640px;width:100%;margin:24px auto;padding:24px 28px;background:#fff;border:1px solid var(--line);border-radius:8px;font-family:Arial,sans-serif;font-size:.85rem;box-sizing:border-box;}
 .borrower-soa-wrap h3,.borrower-soa-wrap h4{text-align:center;}
 .borrower-soa-wrap h4{color:var(--navy);border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:20px;}
 .borrower-soa-wrap table{margin-top:8px;text-align:left;}
 .borrower-soa-wrap table td, .borrower-soa-wrap table th{text-align:left;}
 .borrower-soa-wrap table td:first-child{padding-right:28px;color:var(--muted);}
+.borrower-soa-wrap .soa-borrower-line{font-size:1.05rem;font-weight:600;text-align:left;color:var(--navy);margin:4px 0;}
+.borrower-soa-wrap .soa-status-value{text-transform:uppercase;font-weight:700;letter-spacing:.03em;}
+.borrower-soa-wrap .soa-payment-history th, .borrower-soa-wrap .soa-payment-history td{text-align:center;}
 .report-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:.8rem;table-layout:fixed;}
 .report-table th, .report-table td{border:1px solid #999;padding:6px 8px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .report-table th{white-space: normal; line-height: 1.3; background:var(--navy);color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}

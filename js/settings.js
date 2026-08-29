@@ -1,15 +1,29 @@
+function openStaffModal(){
+  document.getElementById('staffForm').reset();
+  document.getElementById('staffErr').textContent = '';
+  openModal('staffModal');
+}
+
 document.getElementById('staffForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const btn = e.target.querySelector('button[type=submit]');
   if(btn.disabled) return;
   btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Saving…';
   const errEl = document.getElementById('staffErr');
-  errEl.textContent = '';
+  errEl.textContent = 'Please wait while we save the account.';
+  errEl.style.color = 'var(--muted)';
   try{
     const data = Object.fromEntries(new FormData(e.target));
     const out = await postAction('setStaffPassword', data);
-    if(out){ e.target.reset(); errEl.textContent = 'Saved.'; errEl.style.color = 'var(--good)'; }
-  } finally { btn.disabled = false; }
+    if(out){
+      showToast('Account saved successfully.');
+      closeModal('staffModal');
+    } else {
+      errEl.textContent = '';
+    }
+  } finally { btn.disabled = false; btn.textContent = originalLabel; }
 });
 
 document.getElementById('reminderForm')?.addEventListener('submit', async (e)=>{

@@ -78,19 +78,19 @@ function buildSOAHTML(soa){
     <h3 style="margin:0;">Manalo's Lending Corporation Inc.</h3>
     <div style="color:var(--muted);font-size:.75rem;">STATEMENT OF ACCOUNT — ${soa.soaNo}</div>
     <h4>Borrower</h4>
-    <div>${b['Last Name']}, ${b['First Name']} &nbsp;•&nbsp; ID ${b['Borrower ID']}</div>
-    <div>${b['Loan Type']} &nbsp;•&nbsp; Released ${fmtDate(b['Release Date'])}</div>
+    <div class="soa-borrower-line">${b['Last Name']}, ${b['First Name']} &nbsp;•&nbsp; ID ${b['Borrower ID']}</div>
+    <div class="soa-borrower-line">${b['Loan Type']} &nbsp;•&nbsp; Released ${fmtDate(b['Release Date'])}</div>
     <h4>Account Summary</h4>
-    <table>
+    <table class="soa-account-summary">
       <tr><td>Loan Amount</td><td>${fmt(b['Loan Amount'])}</td></tr>
       <tr><td>Total Paid</td><td>${fmt(c.totalPaid)}</td></tr>
       <tr><td>Outstanding Balance (full loan)</td><td>${fmt(c.balance)}</td></tr>
       <tr><td>Amount Due This Cutoff</td><td>${fmt(c.cutoffAmountDue)}</td></tr>
       <tr><td>${b['Loan Type']==='Add-on Diminishing' ? 'Next Due / Renewal' : (isBonusLoanType(b['Loan Type']) ? 'Maturity Date' : 'Next Due Date')}</td><td>${fmtDate(c.nextDue)}</td></tr>
-      <tr><td>Status</td><td>${c.status}</td></tr>
+      <tr><td>Status</td><td class="soa-status-value">${c.status}</td></tr>
     </table>
     <h4>Payment History</h4>
-    <table>
+    <table class="soa-payment-history">
       <thead><tr><th>Date</th><th>OR No.</th><th>Amount</th><th>Mode</th></tr></thead>
       <tbody>${(soa.payments||[]).length ? soa.payments.map(p=>`
         <tr><td>${fmtDate(p['Payment Date'])}</td><td>${p['OR / Reference No.']}</td><td>${fmt(p['Amount Paid'])}</td><td>${p['Mode of Payment']}</td></tr>

@@ -34,7 +34,7 @@
       <div class="err" id="loginErr"></div>
     </form>
     <form class="stack" id="borrowerLoginForm" style="padding:0;border:none;display:none;">
-      <label>Username<input name="username" required autocomplete="username" placeholder="e.g. 1024santos"></label>
+      <label>Username<input name="username" required autocomplete="username"></label>
       <label>Password
         <span style="position:relative;display:block;">
           <input name="password" id="borrowerLoginPasswordInput" type="password" required autocomplete="current-password" style="width:100%;padding-right:40px;">
@@ -66,8 +66,7 @@
   <header class="top borrower-header">
     <h1 id="borrowerGreeting">Good day</h1>
     <div class="whoami">
-      <span id="borrowerWhoamiText" class="whoami-btn" style="cursor:default;"></span>
-      <button class="btn small ghost" onclick="openBorrowerChangePasswordModal()">Change Password</button>
+      <button id="borrowerWhoamiText" class="whoami-btn" title="Edit username/password" onclick="openBorrowerChangePasswordModal()"></button>
       <button id="borrowerLogoutBtn" onclick="borrowerLogout()">Sign out</button>
     </div>
   </header>
@@ -77,12 +76,13 @@
 <div class="modal-backdrop" id="borrowerChangePasswordModal">
   <div class="modal" style="max-width:380px;">
     <button class="modal-close" onclick="closeModal('borrowerChangePasswordModal')"><svg viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg></button>
-    <h3>Change Password</h3>
+    <h3>Edit Account</h3>
     <form class="stack" id="borrowerChangePasswordForm" style="border:none;padding:0;">
+      <label>Username<input name="newUsername" id="borrowerEditUsernameInput" autocomplete="username"></label>
       <label>Current Password<input name="currentPassword" type="password" required autocomplete="current-password"></label>
-      <label>New Password<input name="newPassword" type="password" required minlength="4" autocomplete="new-password"></label>
-      <label>Confirm New Password<input name="confirmNewPassword" type="password" required minlength="4" autocomplete="new-password"></label>
-      <button class="btn gold" type="submit">Update Password</button>
+      <label>New Password (leave blank to keep current)<input name="newPassword" type="password" minlength="4" autocomplete="new-password"></label>
+      <label>Confirm New Password<input name="confirmNewPassword" type="password" minlength="4" autocomplete="new-password"></label>
+      <button class="btn gold" type="submit">Save Changes</button>
       <div class="err" id="borrowerChangePasswordErr"></div>
     </form>
   </div>
@@ -243,17 +243,8 @@
 
     <section id="tab-staff" class="superadmin-only">
       <h2 class="section-title">Users and Roles Management</h2>
-      <div class="note">Create or update an account.</div>
-      <form class="stack" id="staffForm">
-        <label>Username<input name="targetUsername" required></label>
-        <label>Full Name<input name="name" required></label>
-        <label>Role
-          <select name="role"><option value="staff">Staff</option><option value="admin">Admin</option><option value="superadmin">Super Admin</option></select>
-        </label>
-        <label>New Password<input name="newPassword" type="password" required></label>
-        <button class="btn gold" type="submit">Save Account</button>
-        <div class="err" id="staffErr"></div>
-      </form>
+      <div class="note">Create or update a staff account.</div>
+      <button class="btn gold" onclick="openStaffModal()">+ Add / Update Account</button>
     </section>
 
     <section id="tab-logs" class="superadmin-only">
@@ -399,7 +390,7 @@
     <button class="modal-close" onclick="closeModal('addPaymentModal')"><svg viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg></button>
     <h3>Record Payment</h3>
     <form class="stack grid-2" id="paymentForm">
-      <label style="grid-column:1/-1;position:relative;">Borrower (Search by Name or ID)
+      <label style="position:relative;">Borrower (Search by Name or ID)
         <input type="text" id="paymentBorrowerSearch" placeholder="Type name or ID…" autocomplete="off" required>
         <input type="hidden" name="Borrower ID" id="paymentBorrowerSelect">
         <div id="paymentBorrowerResults" class="autocomplete-results"></div>
@@ -413,6 +404,23 @@
       <label>Received By<input name="Received By" id="paymentReceivedByInput"></label>
       <button class="btn gold" type="submit">Record Payment</button>
       <div class="err" id="paymentMsg"></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="staffModal">
+  <div class="modal" style="max-width:680px;">
+    <button class="modal-close" onclick="closeModal('staffModal')"><svg viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg></button>
+    <h3>Add / Update Account</h3>
+    <form class="stack grid-2" id="staffForm">
+      <label>Username<input name="targetUsername" required></label>
+      <label>Full Name<input name="name" required></label>
+      <label>Role
+        <select name="role"><option value="staff">Staff</option><option value="admin">Admin</option><option value="superadmin">Super Admin</option></select>
+      </label>
+      <label>New Password<input name="newPassword" type="password" required></label>
+      <button class="btn gold" type="submit">Save Account</button>
+      <div class="err" id="staffErr"></div>
     </form>
   </div>
 </div>

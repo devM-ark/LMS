@@ -33,7 +33,7 @@ nav.tabbar button svg{width:18px;height:18px;flex-shrink:0;fill:currentColor;}
 /* Login screen */
 #loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);padding:20px;}
 .login-box{background:#fff;border-radius:8px;padding:28px 24px;max-width:340px;width:100%;border-top:4px solid var(--gold);}
-.login-box h1{font-size:1.1rem;color:var(--navy);margin:0 0 2px;}
+.login-box h1{font-size:1.1rem;color:var(--navy);margin:0 0 2px;text-transform:uppercase;letter-spacing:.02em;}
 .login-box .tag{font-family:Arial,sans-serif;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:20px;}
 .pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;padding:6px;cursor:pointer;color:var(--muted);display:flex;align-items:center;}
 .pw-toggle:hover{color:var(--navy);}

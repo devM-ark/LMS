@@ -72,6 +72,7 @@ document.getElementById('borrowerForcedChangeForm').addEventListener('submit', a
 
 function openBorrowerChangePasswordModal(){
   document.getElementById('borrowerChangePasswordForm').reset();
+  document.getElementById('borrowerEditUsernameInput').value = BORROWER_SESSION.username;
   document.getElementById('borrowerChangePasswordErr').textContent = '';
   openModal('borrowerChangePasswordModal');
 }
@@ -82,17 +83,19 @@ document.getElementById('borrowerChangePasswordForm').addEventListener('submit',
   if(btn.disabled) return;
   const errEl = document.getElementById('borrowerChangePasswordErr');
   errEl.textContent = '';
-  const {currentPassword, newPassword, confirmNewPassword} = Object.fromEntries(new FormData(e.target));
-  if(newPassword !== confirmNewPassword){ errEl.textContent = 'Passwords do not match.'; return; }
+  const {newUsername, currentPassword, newPassword, confirmNewPassword} = Object.fromEntries(new FormData(e.target));
+  if(newPassword && newPassword !== confirmNewPassword){ errEl.textContent = 'Passwords do not match.'; return; }
   btn.disabled = true;
   try{
     const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({
-      action:'changeBorrowerPassword', username: BORROWER_SESSION.username, currentPassword, newPassword
+      action:'updateOwnBorrowerAccount', username: BORROWER_SESSION.username, currentPassword, newUsername, newPassword
     })});
     const out = await res.json();
     if(out.error){ errEl.textContent = out.error; return; }
+    BORROWER_SESSION.username = out.username;
+    sessionStorage.setItem('lm_borrower_session', JSON.stringify(BORROWER_SESSION));
     closeModal('borrowerChangePasswordModal');
-    showToast('Password updated successfully.');
+    showToast('Account updated successfully.');
   }catch(err){ errEl.textContent = 'Could not reach the server.'; }
   finally { btn.disabled = false; }
 });
@@ -102,7 +105,7 @@ async function enterBorrowerPortal(){
   document.getElementById('borrowerChangePasswordScreen').style.display = 'none';
   document.getElementById('borrowerPortal').style.display = 'block';
   document.getElementById('borrowerGreeting').textContent = `Good day, ${BORROWER_SESSION.firstName} ${BORROWER_SESSION.lastName}`;
-  document.getElementById('borrowerWhoamiText').textContent = `${BORROWER_SESSION.firstName} ${BORROWER_SESSION.lastName} • Borrower`;
+  document.getElementById('borrowerWhoamiText').innerHTML = '<svg viewBox="0 0 24 24"><path d="m12,0C5.383,0,0,5.383,0,12s5.383,12,12,12,12-5.383,12-12S18.617,0,12,0Zm-4,21.164v-.164c0-2.206,1.794-4,4-4s4,1.794,4,4v.164c-1.226.537-2.578.836-4,.836s-2.774-.299-4-.836Zm9.925-1.113c-.456-2.859-2.939-5.051-5.925-5.051s-5.468,2.192-5.925,5.051c-2.47-1.823-4.075-4.753-4.075-8.051C2,6.486,6.486,2,12,2s10,4.486,10,10c0,3.298-1.605,6.228-4.075,8.051Zm-5.925-15.051c-2.206,0-4,1.794-4,4s1.794,4,4,4,4-1.794,4-4-1.794-4-4-4Zm0,6c-1.103,0-2-.897-2-2s.897-2,2-2,2,.897,2,2-.897,2-2,2Z"/></svg><span>' + BORROWER_SESSION.firstName + ' ' + BORROWER_SESSION.lastName + ' • Borrower</span>';
   const contentEl = document.getElementById('borrowerSOAContent');
   contentEl.innerHTML = '<div class="empty">Please wait while we prepare your Statement of Account.</div>';
   const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({action:'getMySOA', username: BORROWER_SESSION.username})});
