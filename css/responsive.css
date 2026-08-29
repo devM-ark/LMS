@@ -1,0 +1,63 @@
+@media (max-width:720px){ .app{margin-left:64px;padding:0 14px 24px;} }
+
+@media (max-width:720px){
+  #masterlistTable{ table-layout:auto; width:max-content; min-width:100%; }
+  #masterlistTable col{ width:auto !important; }
+  #masterlistTable td, #masterlistTable th{ white-space:nowrap; overflow:visible; text-overflow:clip; padding:8px 10px; }
+  #logsTable{ table-layout:auto; width:max-content; min-width:100%; }
+  #logsTable col{ width:auto !important; }
+  #logsTable td, #logsTable th{ white-space:nowrap; overflow:visible; text-overflow:clip; padding:8px 10px; }
+}
+
+@media(max-width:640px){ .cards{grid-template-columns:1fr 1fr;} }
+
+@media(max-width:600px){ form.grid-2{grid-template-columns:1fr;} }
+
+@media(max-width:640px){ form.grid-3{grid-template-columns:1fr;} }
+
+@media (max-width:720px){
+  .sidebar-footer{padding:5px 4px;text-align:center;}
+  .sidebar-footer a{justify-content:center;}
+  .sidebar-footer .footer-text, .sidebar-footer .footer-sub{display:none;}
+}
+
+@media (max-width:720px){
+  nav.tabbar{width:64px;padding-top:16px;}
+  .sidebar-banner{display:none;}
+  nav.tabbar button{flex-direction:column;gap:4px;padding:12px 4px;font-size:.6rem;text-align:center;}
+  nav.tabbar button svg{width:20px;height:20px;}
+}
+
+@page reportpage{ size:landscape; margin:10mm; }
+#reportOutput{ page:reportpage; }
+#collectionsOutput{ page:reportpage; }
+
+@media print{
+  body * { visibility:hidden; }
+  .modal-backdrop.open, .modal-backdrop.open *{ visibility:visible; }
+  .modal-backdrop.open{ position:absolute; top:0; left:0; width:100%; background:#fff; padding:0; }
+  #reportOutput.open, #reportOutput.open *{ visibility:visible; }
+  #reportOutput.open{ position:absolute; top:0; left:0; width:100%; background:#fff; }
+  #collectionsOutput.open, #collectionsOutput.open *{ visibility:visible; }
+  #collectionsOutput.open{ position:absolute; top:0; left:0; width:100%; background:#fff; }
+  .no-print{ display:none !important; }
+  .schedule-wrap{ max-height:none !important; overflow:visible !important; }
+  #soaContent{ font-size:11px; }
+  #soaContent h3{ font-size:14px; margin-bottom:2px; }
+  #soaContent h4{ font-size:11px; margin-top:8px; margin-bottom:2px; padding-bottom:2px; }
+  .schedule-table td, .schedule-table th{ padding:2px 6px; font-size:10px; }
+  .status-pill{ padding:1px 6px; font-size:9px; }
+  .report-table{ font-size:9px; }
+  .report-table th, .report-table td{ padding:3px 5px; }
+  @page{ margin:12mm; }
+}
+
+/* Placed last on purpose: equal-specificity CSS rules are decided by source
+   order, not by which @media block they're in, so this must come after the
+   base .report-table rule (in components.css) and the @media print block
+   above to actually win on mobile screens. */
+@media (max-width:720px){
+  .report-table{ table-layout:auto; width:max-content; min-width:100%; }
+  .report-table col{ width:auto !important; }
+  .report-table td, .report-table th{ white-space:nowrap; overflow:visible; text-overflow:clip; }
+}

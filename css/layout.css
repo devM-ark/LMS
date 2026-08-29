@@ -1,0 +1,50 @@
+.app{margin:0 0 0 190px;padding:0 28px 24px;}
+
+header.top{background:var(--navy);color:#fff;padding:18px 20px 14px;position:sticky;top:0;z-index:10;border-bottom:3px solid var(--gold);display:flex;justify-content:space-between;align-items:flex-start;}
+header.top h1{font-size:1.05rem;margin:0;font-weight:600;letter-spacing:.02em;}
+header.top .sub{font-family:Arial,sans-serif;font-size:.7rem;color:#B9C6D0;margin-top:2px;letter-spacing:.08em;text-transform:uppercase;}
+.sync{font-family:Arial,sans-serif;font-size:.68rem;color:#8FBF9C;margin-top:6px;}
+.sync.err{color:#E8A2A2;}
+.whoami{font-family:Arial,sans-serif;font-size:.72rem;color:#DCE4E9;text-align:right;}
+.whoami button{margin-top:4px;background:none;border:1px solid #4C6478;color:#DCE4E9;font-size:.65rem;padding:3px 8px;border-radius:3px;}
+.whoami-btn{display:flex !important;align-items:center;gap:5px;border:none !important;padding:0 !important;margin-top:0 !important;font-size:.72rem !important;cursor:pointer;color:#DCE4E9;}
+.whoami-btn:hover{color:var(--gold);}
+.whoami-btn svg{width:14px;height:14px;fill:currentColor;flex-shrink:0;}
+
+main{padding:16px;}
+section{display:none;} section.active{display:block;}
+
+nav.tabbar{position:fixed;top:0;left:0;bottom:0;width:190px;background:var(--navy);display:flex;flex-direction:column;align-items:stretch;padding:16px 0 10px;border-right:3px solid var(--gold);border-top:none;font-family:Arial,sans-serif;z-index:20;}
+.sidebar-banner{padding:4px 16px 14px;text-align:center;border-bottom:1px solid rgba(255,255,255,.12);margin-bottom:10px;}
+.sidebar-banner img{max-width:100%;height:auto;display:block;margin:0 auto;}
+.app-version{margin-top:6px;font-size:.62rem;color:#7E8C97;letter-spacing:.04em;}
+nav.tabbar button{background:none;border:none;color:#B9C6D0;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em;display:flex;flex-direction:row;align-items:center;gap:12px;padding:14px 22px;text-align:left;position:relative;}
+nav.tabbar button span:first-child{font-size:1.1rem;width:20px;}
+nav.tabbar button.active{color:var(--gold);background:rgba(255,255,255,.06);}
+nav.tabbar .dot{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);opacity:0;}
+nav.tabbar button.active .dot{opacity:1;}
+nav.tabbar button svg{width:18px;height:18px;flex-shrink:0;fill:currentColor;}
+.sidebar-footer{margin-top:auto;padding:16px 22px;border-top:1px solid rgba(255,255,255,.12);text-align:left;}
+.sidebar-footer a{display:flex;align-items:center;justify-content:flex-start;gap:12px;color:#B9C6D0;text-decoration:none;font-size:.72rem;}
+.sidebar-footer a:hover{color:var(--gold);}
+.sidebar-footer svg{width:16px;height:16px;fill:currentColor;flex-shrink:0;}
+.sidebar-footer .footer-sub{font-size:.62rem;color:#7E8C97;margin-top:5px;line-height:1.3;}
+
+/* Login screen */
+#loginScreen{min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--navy);padding:20px;}
+.login-box{background:#fff;border-radius:8px;padding:28px 24px;max-width:340px;width:100%;border-top:4px solid var(--gold);}
+.login-box h1{font-size:1.1rem;color:var(--navy);margin:0 0 2px;}
+.login-box .tag{font-family:Arial,sans-serif;font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:20px;}
+.pw-toggle{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;padding:6px;cursor:pointer;color:var(--muted);display:flex;align-items:center;}
+.pw-toggle:hover{color:var(--navy);}
+.pw-toggle svg{width:18px;height:18px;fill:currentColor;}
+.login-box .err{font-family:Arial,sans-serif;font-size:.78rem;color:var(--bad);margin-top:6px;min-height:1em;}
+
+/* Modal shell */
+.modal-backdrop{display:none;position:fixed;inset:0;background:rgba(8,24,38,.55);z-index:50;align-items:flex-start;justify-content:center;padding:30px 14px;overflow-y:auto;}
+.modal-backdrop.open{display:flex;}
+.modal{background:#fff;border-radius:8px;max-width:520px;width:100%;padding:20px;border-top:4px solid var(--gold);}
+.modal h3{margin:0 0 12px;font-family:Arial,sans-serif;color:var(--navy);}
+.modal-close{float:right;background:none;border:none;color:var(--muted);cursor:pointer;padding:4px;line-height:0;}
+.modal-close:hover{color:var(--navy);}
+.modal-close svg{width:16px;height:16px;fill:currentColor;display:block;}

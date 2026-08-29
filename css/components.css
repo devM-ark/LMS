@@ -1,0 +1,87 @@
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+.card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 12px;text-align:center;}
+.card-clickable{cursor:pointer;transition:box-shadow .15s,border-color .15s;}
+.card-clickable:hover{box-shadow:0 2px 8px rgba(8,24,38,.12);border-color:var(--gold);}
+.card .n{font-family:Arial,sans-serif;font-size:1.25rem;font-weight:700;color:var(--navy);}
+.card .l{font-family:Arial,sans-serif;font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-top:1px;}
+.card.wide{grid-column:1/-1;}
+
+#reportOutput, #collectionsOutput{display:none;}
+#reportOutput.open, #collectionsOutput.open{display:block;}
+
+table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:.82rem;background:#fff;}
+#masterlistTable{table-layout:fixed;}
+#masterlistTable th{text-align:center;}
+#masterlistTable td{white-space:nowrap;}
+#masterlistTable td:nth-child(2), #masterlistTable td:nth-child(3){overflow:hidden;text-overflow:ellipsis;}
+#masterlistTable td:nth-child(3), #masterlistTable td:nth-child(4),
+#masterlistTable td:nth-child(5),
+#masterlistTable td:nth-child(6), #masterlistTable td:nth-child(7),
+#masterlistTable td:nth-child(8){ text-align:center; }
+#logsTable{table-layout:fixed;}
+#logsTable th{text-align:center;}
+#logsTable td{white-space:normal;word-break:break-word;}
+#logsTable td:nth-child(3){ text-align:center; white-space:nowrap; }
+th{background:var(--navy);color:#fff;text-align:left;padding:8px 10px;font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.03em;}
+td{padding:8px 10px;border-bottom:1px solid var(--line);}
+tr:last-child td{border-bottom:none;}
+
+.status-pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em;}
+.status-Active{background:#E4EDE8;color:var(--good);}
+.status-Paid{background:#E9E9E9;color:var(--ink);font-weight:800;}
+.status-Nearly-Due{background:#FBF0DC;color:var(--warn);}
+.status-Due-Today{background:#FCE3C3;color:#C1651F;}
+.status-Past-Due{background:#F7E3E1;color:var(--bad);}
+.status-Eligible-for-Renewal{background:#F7E3E1;color:var(--bad);}
+.status-PAID{background:#E9E9E9;color:var(--ink);font-weight:800;}
+.status-UNPAID{background:#FBF0DC;color:var(--warn);}
+.status-PAST-DUE{background:#F7E3E1;color:var(--bad);}
+
+.table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px;}
+
+form.stack{display:flex;flex-direction:column;gap:14px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:18px;}
+form.stack label{display:block;font-family:Arial,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px;}
+form.stack input,form.stack select{width:100%;font-family:Arial,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:4px;font-size:.9rem;}
+form.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;}
+form.grid-2 label{margin-bottom:0;}
+form.grid-2 button{grid-column:1/-1;justify-self:end;min-width:180px;}
+form.grid-2 .err{grid-column:1/-1;}
+form.grid-2 .note{grid-column:1/-1;}
+form.grid-3{display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:start;}
+form.grid-3 .btn-field-spacer{display:flex;flex-direction:column;}
+form.grid-3 .btn-field-spacer label{margin-bottom:5px;font-family:Arial,sans-serif;font-size:.72rem;}
+form.grid-3 button{white-space:nowrap;}
+
+.autocomplete-results{display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--line);border-top:none;max-height:220px;overflow-y:auto;z-index:30;border-radius:0 0 4px 4px;box-shadow:0 4px 10px rgba(0,0,0,.08);}
+.autocomplete-results.show{display:block;}
+.autocomplete-results .item{padding:8px 12px;font-family:Arial,sans-serif;font-size:.85rem;cursor:pointer;border-bottom:1px solid var(--line);}
+.autocomplete-results .item:hover{background:var(--paper);}
+.autocomplete-results .item:last-child{border-bottom:none;}
+
+.btn{font-family:Arial,sans-serif;background:var(--navy);color:#fff;border:none;border-radius:4px;padding:11px 16px;font-size:.85rem;font-weight:600;letter-spacing:.02em;cursor:pointer;}
+.btn:active{background:var(--navy-deep);}
+.btn.gold{background:var(--gold);color:var(--navy-deep);}
+.btn.small{padding:5px 10px;font-size:.72rem;}
+.btn.danger{background:var(--bad);}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--navy);}
+
+.status-modal-table{table-layout:fixed;}
+.status-modal-table th, .status-modal-table td{text-align:center;white-space:normal;word-break:break-word;}
+.status-modal-table th:first-child, .status-modal-table td:first-child{text-align:left;}
+
+/* SOA / printable report tables */
+#soaContent{font-family:Arial,sans-serif;font-size:.85rem;}
+#soaContent h4{color:var(--navy);border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:16px;}
+#soaContent table{margin-top:8px;}
+.schedule-wrap{max-height:260px;overflow-y:auto;}
+.schedule-table td, .schedule-table th{padding:4px 8px;}
+.report-table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size:.8rem;table-layout:fixed;}
+.report-table th, .report-table td{border:1px solid #999;padding:6px 8px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.report-table th{white-space: normal; line-height: 1.3; background:var(--navy);color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+.report-table td:nth-child(2){text-align:left;}
+.borrowers-report-table td:nth-child(4), .borrowers-report-table td:nth-child(7),
+.borrowers-report-table td:nth-child(8), .borrowers-report-table td:nth-child(9){text-align:right;}
+.collections-report-table td:nth-child(6){text-align:right;}
+#collectionsTotalRow td{font-family:Arial,sans-serif;font-weight:700;color:var(--navy);border-top:2px solid var(--navy);background:#fff;padding:8px 10px;}
+#collectionsTotalRow td:first-child{text-align:right;}
+#collectionsTotalRow td:last-child{text-align:right;}
