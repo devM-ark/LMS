@@ -102,23 +102,6 @@ function updateCutoffAuto(){
   if(type === 'Add-on Diminishing' || isBonusLoanType(type)){
     cutoffInput.value = '';
     cutoffInput.placeholder = 'N/A';
-    if(type === 'Add-on Diminishing'){
-      hint.innerHTML = 'Add-on Diminishing loans have no fixed per-cutoff amount — balance compounds per payment instead.';
-    } else {
-      // Bonus Loan: "Loan Amount" IS the principal the borrower owes back in full.
-      // The interest fee (configured per tier in Settings, default ₱9,000) is only
-      // deducted from what they physically receive at release — it never reduces
-      // the principal/balance itself.
-      let interestFee = 9000;
-      const btMatch = (STATE?.loanTypes||[]).find(lt => lt.LoanType === type && Number(lt.AmountTier) === amt);
-      if(btMatch && btMatch.LumpSumAmount) interestFee = Number(btMatch.LumpSumAmount);
-      const netReleased = amt > 0 ? Math.max(0, amt - interestFee) : null;
-      hint.innerHTML = `<b>Loan Amount above = Principal / Amount to Pay</b> — this is the full amount owed back and what shows as the balance.<br>`
-        + (netReleased !== null
-            ? `Interest fee (from Settings): ₱${interestFee.toLocaleString()} — <b>Net Amount Released to Borrower: ₱${netReleased.toLocaleString()}</b>`
-            : `Interest fee (from Settings): ₱${interestFee.toLocaleString()} — enter the Loan Amount above to see the net release amount.`);
-    }
-    hint.style.display = 'block';
     return;
   }
   const match = (STATE?.loanTypes||[]).find(lt =>
@@ -147,7 +130,7 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
   try{
     const out = await postAction('addBorrower', {data});
     if(out){
-      showToast('✓ Borrower added successfully.');
+      showToast('Borrower added successfully.');
       e.target.reset();
       setTodayDefault('borrowerReleaseDateInput');
       await loadData();

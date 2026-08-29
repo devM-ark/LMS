@@ -65,5 +65,47 @@ function showToast(message, isError){
   t.style.background = isError ? 'var(--bad)' : 'var(--good)';
   t.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>{ t.classList.remove('show'); }, 10000);
+  toastTimer = setTimeout(()=>{ t.classList.remove('show'); }, 5000);
+}
+
+/** Shared Statement of Account renderer — used by the staff SOA modal
+ *  (borrowers.js showSOA) and the Borrower/Viewer self-service portal
+ *  (borrower-portal.js). Keeping this in one place means both views always
+ *  show the exact same numbers/layout. */
+function buildSOAHTML(soa){
+  const b = soa.borrower, c = soa.computed;
+  return `
+    <h3 style="margin:0;">Manalo's Lending Corporation Inc.</h3>
+    <div style="color:var(--muted);font-size:.75rem;">STATEMENT OF ACCOUNT — ${soa.soaNo}</div>
+    <h4>Borrower</h4>
+    <div>${b['Last Name']}, ${b['First Name']} &nbsp;•&nbsp; ID ${b['Borrower ID']}</div>
+    <div>${b['Loan Type']} &nbsp;•&nbsp; Released ${fmtDate(b['Release Date'])}</div>
+    <h4>Account Summary</h4>
+    <table>
+      <tr><td>Loan Amount</td><td>${fmt(b['Loan Amount'])}</td></tr>
+      <tr><td>Total Paid</td><td>${fmt(c.totalPaid)}</td></tr>
+      <tr><td>Outstanding Balance (full loan)</td><td>${fmt(c.balance)}</td></tr>
+      <tr><td>Amount Due This Cutoff</td><td>${fmt(c.cutoffAmountDue)}</td></tr>
+      <tr><td>${b['Loan Type']==='Add-on Diminishing' ? 'Next Due / Renewal' : (isBonusLoanType(b['Loan Type']) ? 'Maturity Date' : 'Next Due Date')}</td><td>${fmtDate(c.nextDue)}</td></tr>
+      <tr><td>Status</td><td>${c.status}</td></tr>
+    </table>
+    <h4>Payment History</h4>
+    <table>
+      <thead><tr><th>Date</th><th>OR No.</th><th>Amount</th><th>Mode</th></tr></thead>
+      <tbody>${(soa.payments||[]).length ? soa.payments.map(p=>`
+        <tr><td>${fmtDate(p['Payment Date'])}</td><td>${p['OR / Reference No.']}</td><td>${fmt(p['Amount Paid'])}</td><td>${p['Mode of Payment']}</td></tr>
+      `).join('') : '<tr><td colspan="4" class="empty">No payments recorded</td></tr>'}</tbody>
+    </table>
+    ${soa.schedule && soa.schedule.length ? `
+    <h4>Cutoff Schedule</h4>
+    <div class="schedule-wrap">
+    <table class="schedule-table">
+      <thead><tr><th>Due Date</th><th>Amount</th><th>Status</th></tr></thead>
+      <tbody>${soa.schedule.map(r=>`
+        <tr><td>${fmtDate(r.date)}</td><td>${fmt(r.amount)}</td><td><span class="status-pill status-${r.status.replace(/\s+/g,'-')}">${r.status}</span></td></tr>
+      `).join('')}</tbody>
+    </table>
+    </div>` : ''}
+    <div style="margin-top:16px;font-size:.72rem;color:var(--muted);">Generated ${fmtDate(soa.dateGenerated)}</div>
+  `;
 }

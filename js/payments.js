@@ -110,11 +110,12 @@ document.getElementById('paymentForm').addEventListener('submit', async (e)=>{
   btn.textContent = 'Saving…';
   const data = Object.fromEntries(new FormData(e.target));
   const msgEl = document.getElementById('paymentMsg');
-  msgEl.textContent = '';
+  msgEl.textContent = 'Please wait while we record the payment.';
+  msgEl.style.color = 'var(--muted)';
   try{
     const out = await postAction('addPayment', {data});
     if(out){
-      showToast('✓ Payment recorded successfully.');
+      showToast('Payment recorded successfully.');
       e.target.reset();
       document.getElementById('paymentBorrowerName').value = '';
       document.getElementById('paymentAmountInput').placeholder = '';
@@ -122,6 +123,8 @@ document.getElementById('paymentForm').addEventListener('submit', async (e)=>{
       document.getElementById('paymentReceivedByInput').value = SESSION.name;
       await loadData();
       closeModal('addPaymentModal');
+    } else {
+      msgEl.textContent = '';
     }
   } finally { btn.disabled = false; btn.textContent = originalLabel; }
 });
