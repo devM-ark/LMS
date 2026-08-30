@@ -58,7 +58,7 @@ function buildReceiptCopy(payment, borrower, copyLabel){
   return `
     <div class="receipt-copy">
       <div style="text-align:center;border-bottom:2px solid var(--gold);padding-bottom:8px;margin-bottom:10px;">
-        <div style="font-family:Georgia,serif;font-weight:bold;font-size:.95rem;color:var(--navy);">${companyName}</div>
+        <div style="font-family:Arial,sans-serif;font-weight:bold;font-size:.95rem;color:var(--navy);">${companyName}</div>
         <div style="font-family:Arial,sans-serif;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;">Official Receipt</div>
         <div style="font-family:Arial,sans-serif;font-size:.62rem;color:var(--gold);text-transform:uppercase;letter-spacing:.08em;margin-top:4px;font-weight:700;">${copyLabel}</div>
       </div>
@@ -151,4 +151,52 @@ function openAddPaymentModal(){
   if(rb && SESSION && !rb.value) rb.value = SESSION.name;
   document.getElementById('paymentMsg').textContent = '';
   openModal('addPaymentModal');
+}
+
+let paymentsSearchQuery = '';
+let paymentsSort = { key: 'Payment Date', dir: -1 }; // default: newest first
+
+document.querySelectorAll('th.sortable[data-table="payments"]').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    paymentsSort.dir = (paymentsSort.key === key) ? -paymentsSort.dir : 1;
+    paymentsSort.key = key;
+    renderPaymentsTable();
+  });
+});
+
+document.getElementById('paymentsSearchInput')?.addEventListener('input', (e)=>{
+  paymentsSearchQuery = e.target.value;
+  renderPaymentsTable();
+});
+
+function renderPaymentsTable(){
+  const ptbody = document.querySelector('#paymentsTable tbody');
+  if(!ptbody || !STATE) return;
+  const payments = STATE.payments || [];
+  const q = paymentsSearchQuery.trim().toLowerCase();
+  let visible = q ? payments.filter(p => {
+    const name = (p['Borrower Name'] || '').toLowerCase();
+    const id = String(p['Borrower ID'] || '').toLowerCase();
+    const or = String(p['OR / Reference No.'] || '').toLowerCase();
+    return name.includes(q) || id.includes(q) || or.includes(q);
+  }) : payments;
+  if(paymentsSort.key){
+    const kind = paymentsSort.key === 'Payment Date' ? 'date' : (paymentsSort.key === 'Amount Paid' ? 'number' : 'text');
+    visible = sortRows(visible, paymentsSort.key, paymentsSort.dir, kind);
+  }
+  updateSortHeaderClasses('payments', paymentsSort.key, paymentsSort.dir);
+  ptbody.innerHTML = visible.length ? visible.map(p=>`
+    <tr>
+      <td>${fmtDate(p['Payment Date'])}</td>
+      <td>${p['Borrower Name'] || p['Borrower ID']}</td>
+      <td>${p['OR / Reference No.']}</td>
+      <td>${fmt(p['Amount Paid'])}</td>
+      <td>${p['Mode of Payment']}</td>
+      <td>${p.Status==='VOID' ? '<span class="status-pill status-Past-Due">VOID</span>' : `<span class="status-pill status-Active">${p.Status || 'Payment Success'}</span>`}</td>
+      <td class="no-print"><button class="btn small ghost" onclick="showReceiptForRow(${p._row})">View</button></td>
+      <td class="no-print admin-only" style="display:${isAdmin()?'':'none'}">
+        ${p.Status==='VOID' ? '' : `<button class="btn small danger" onclick="voidPayment(${p._row})">Void</button>`}
+      </td>
+    </tr>`).join('') : `<tr><td colspan="8" class="empty">${q ? 'No payments match "'+q+'"' : 'No payments yet'}</td></tr>`;
 }

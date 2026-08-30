@@ -77,7 +77,7 @@ function buildSOAHTML(soa){
   const companyName = soa.companyName || (STATE?.settings && STATE.settings.CompanyName) || "Manalo's Lending Corporation Inc.";
   return `
     <h3 style="margin:0;">${companyName}</h3>
-    <div style="color:var(--muted);font-size:.75rem;">STATEMENT OF ACCOUNT — ${soa.soaNo}</div>
+    <div class="soa-subtitle">STATEMENT OF ACCOUNT — ${soa.soaNo}</div>
     <h4>Borrower Information</h4>
     <div class="soa-borrower-line">${b['Last Name']}, ${b['First Name']} &nbsp;•&nbsp; ID ${b['Borrower ID']}</div>
     <div class="soa-borrower-line">${b['Loan Type']} &nbsp;•&nbsp; Released ${fmtDate(b['Release Date'])}</div>
@@ -91,19 +91,19 @@ function buildSOAHTML(soa){
       <tr><td>Status</td><td class="soa-status-value">${c.status}</td></tr>
     </table>
     <h4>Payment History</h4>
-    <table class="soa-payment-history">
-      <thead><tr><th>Date</th><th>OR No.</th><th>Amount</th><th>Mode</th></tr></thead>
+    <table class="soa-data-table">
+      <thead><tr><th>Date</th><th>OR No.</th><th class="amt">Amount</th><th>Mode</th></tr></thead>
       <tbody>${(soa.payments||[]).length ? soa.payments.map(p=>`
-        <tr><td>${fmtDate(p['Payment Date'])}</td><td>${p['OR / Reference No.']}</td><td>${fmt(p['Amount Paid'])}</td><td>${p['Mode of Payment']}</td></tr>
+        <tr><td>${fmtDate(p['Payment Date'])}</td><td>${p['OR / Reference No.']}</td><td class="amt">${fmt(p['Amount Paid'])}</td><td>${p['Mode of Payment']}</td></tr>
       `).join('') : '<tr><td colspan="4" class="empty">No payments recorded</td></tr>'}</tbody>
     </table>
     ${soa.schedule && soa.schedule.length ? `
     <h4>Cutoff Schedule</h4>
     <div class="schedule-wrap">
-    <table class="schedule-table">
-      <thead><tr><th>Due Date</th><th>Amount</th><th>Status</th></tr></thead>
+    <table class="soa-data-table schedule-table">
+      <thead><tr><th>Due Date</th><th class="amt">Amount</th><th>Status</th></tr></thead>
       <tbody>${soa.schedule.map(r=>`
-        <tr><td>${fmtDate(r.date)}</td><td>${fmt(r.amount)}</td><td><span class="status-pill status-${r.status.replace(/\s+/g,'-')}">${r.status}</span></td></tr>
+        <tr><td>${fmtDate(r.date)}</td><td class="amt">${fmt(r.amount)}</td><td><span class="status-pill status-${r.status.replace(/\s+/g,'-')}">${r.status}</span></td></tr>
       `).join('')}</tbody>
     </table>
     </div>` : ''}

@@ -124,7 +124,6 @@ async function loadData(){
 function render(){
   if(!STATE) return;
   const borrowers = STATE.borrowers || [];
-  const payments = STATE.payments || [];
 
   const counts = {};
   let outstanding=0, collected=0;
@@ -184,19 +183,5 @@ function render(){
   if(idField) idField.value = computeNextBorrowerId();
 
   renderBorrowersTable();
-
-  const ptbody = document.querySelector('#paymentsTable tbody');
-  ptbody.innerHTML = payments.length ? payments.map(p=>`
-    <tr>
-      <td>${fmtDate(p['Payment Date'])}</td>
-      <td>${p['Borrower Name'] || p['Borrower ID']}</td>
-      <td>${p['OR / Reference No.']}</td>
-      <td>${fmt(p['Amount Paid'])}</td>
-      <td>${p['Mode of Payment']}</td>
-      <td>${p.Status==='VOID' ? '<span class="status-pill status-Past-Due">VOID</span>' : `<span class="status-pill status-Active">${p.Status || 'Payment Success'}</span>`}</td>
-      <td class="no-print"><button class="btn small ghost" onclick="showReceiptForRow(${p._row})">View</button></td>
-      <td class="no-print admin-only" style="display:${isAdmin()?'':'none'}">
-        ${p.Status==='VOID' ? '' : `<button class="btn small danger" onclick="voidPayment(${p._row})">Void</button>`}
-      </td>
-    </tr>`).join('') : `<tr><td colspan="8" class="empty">No payments yet</td></tr>`;
+  renderPaymentsTable();
 }

@@ -1,8 +1,34 @@
-/**
- * borrowers.js — Masterlist table rendering, the Add/Edit Borrower
- * modals (including the loan-type/amount/cutoff auto-fill logic), and
- * the Statement of Account (SOA) view.
- */
+let masterlistSort = { key: null, dir: 1 };
+
+function sortRows(rows, key, dir, kind){
+  return [...rows].sort((a, b) => {
+    let av, bv;
+    if(key === 'name'){ av = `${a['Last Name']||''} ${a['First Name']||''}`.toLowerCase(); bv = `${b['Last Name']||''} ${b['First Name']||''}`.toLowerCase(); }
+    else { av = a[key]; bv = b[key]; }
+    if(kind === 'date'){ av = av ? new Date(av).getTime() : -Infinity; bv = bv ? new Date(bv).getTime() : -Infinity; }
+    else if(kind === 'number'){ av = Number(av) || 0; bv = Number(bv) || 0; }
+    else { av = String(av ?? '').toLowerCase(); bv = String(bv ?? '').toLowerCase(); }
+    if(av < bv) return -1 * dir;
+    if(av > bv) return 1 * dir;
+    return 0;
+  });
+}
+
+function updateSortHeaderClasses(tableId, activeKey, dir){
+  document.querySelectorAll(`th.sortable[data-table="${tableId}"]`).forEach(th => {
+    th.classList.remove('sort-asc', 'sort-desc');
+    if(th.dataset.key === activeKey) th.classList.add(dir === 1 ? 'sort-asc' : 'sort-desc');
+  });
+}
+
+document.querySelectorAll('th.sortable[data-table="masterlist"]').forEach(th => {
+  th.addEventListener('click', () => {
+    const key = th.dataset.key;
+    masterlistSort.dir = (masterlistSort.key === key) ? -masterlistSort.dir : 1;
+    masterlistSort.key = key;
+    renderBorrowersTable();
+  });
+});
 
 function renderBorrowersTable(){
   const mtbody = document.querySelector('#masterlistTable tbody');
@@ -12,11 +38,16 @@ function renderBorrowersTable(){
   // Default view: Active Borrowers only (any unpaid loan). Searching reaches
   // every borrower, including Paid ones, so paid history is still findable.
   const pool = q ? borrowers : borrowers.filter(b => b.status !== 'Paid');
-  const visibleBorrowers = q ? pool.filter(b => {
+  let visibleBorrowers = q ? pool.filter(b => {
     const idStr = String(b['Borrower ID'] || '').toLowerCase();
     const nameStr = `${b['Last Name']||''} ${b['First Name']||''}`.toLowerCase();
     return idStr.includes(q) || nameStr.includes(q);
   }) : pool;
+  if(masterlistSort.key){
+    const kind = masterlistSort.key === 'cutoffAmountDue' ? 'number' : (masterlistSort.key === 'nextDue' ? 'date' : (masterlistSort.key === 'Borrower ID' ? 'number' : 'text'));
+    visibleBorrowers = sortRows(visibleBorrowers, masterlistSort.key, masterlistSort.dir, kind);
+  }
+  updateSortHeaderClasses('masterlist', masterlistSort.key, masterlistSort.dir);
   mtbody.innerHTML = visibleBorrowers.length ? visibleBorrowers.map(b=>`
     <tr>
       <td>${b['Borrower ID']}</td>
