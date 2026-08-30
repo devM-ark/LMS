@@ -22,10 +22,11 @@ table{width:100%;border-collapse:collapse;font-family:Arial,sans-serif;font-size
 #logsTable th{text-align:center;}
 #logsTable td{white-space:normal;word-break:break-word;}
 #paymentsTable{text-align:center;}
+#paymentsTable th{text-align:center;}
 #paymentsTable td:nth-child(2), #paymentsTable th:nth-child(2){text-align:left;}
-th.sortable{cursor:pointer;user-select:none;position:relative;}
-th.sortable:hover{background:rgba(255,255,255,.08);}
-th.sortable::after{content:'';display:inline-block;margin-left:5px;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;vertical-align:middle;opacity:.4;}
+th.sortable{cursor:pointer;user-select:none;position:relative;padding-right:20px;}
+th.sortable:hover{background:#1a3c56;}
+th.sortable::after{content:'';position:absolute;right:7px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;opacity:.4;}
 th.sortable.sort-asc::after{border-bottom:5px solid currentColor;opacity:1;}
 th.sortable.sort-desc::after{border-top:5px solid currentColor;opacity:1;}
 #logsTable td:nth-child(3){ text-align:center; white-space:nowrap; }

@@ -135,8 +135,8 @@
             <th class="sortable" data-table="masterlist" data-key="Borrower ID">ID</th>
             <th class="sortable" data-table="masterlist" data-key="name">Name</th>
             <th>Loan Type</th>
-            <th class="sortable" data-table="masterlist" data-key="cutoffAmountDue">Balance Due</th>
-            <th class="sortable" data-table="masterlist" data-key="nextDue">Next Due</th>
+            <th>Balance Due</th>
+            <th>Next Due</th>
             <th>Status</th><th class="no-print">SOA</th><th class="no-print admin-only">Edit</th>
           </tr></thead>
           <tbody></tbody>
@@ -153,7 +153,7 @@
             <th class="sortable" data-table="payments" data-key="Payment Date">Date</th>
             <th class="sortable" data-table="payments" data-key="Borrower Name">Borrower</th>
             <th>OR No.</th>
-            <th class="sortable" data-table="payments" data-key="Amount Paid">Amount</th>
+            <th>Amount</th>
             <th>Mode</th><th>Status</th><th class="no-print">Receipt</th><th class="no-print admin-only">Void</th>
           </tr></thead>
           <tbody></tbody>
@@ -166,7 +166,7 @@
       <div class="reports-grid">
         <div class="reports-col-header">Summary of Borrowers</div>
         <div class="reports-col-header">Summary of Collections</div>
-        <form  id="reportFilterForm">
+        <form class="stack" id="reportFilterForm">
           <label>Group
             <select name="Group" id="reportGroupSelect">
               <option value="Teachers">Teachers</option>
@@ -181,7 +181,7 @@
           </label>
           <button class="btn gold" type="submit">Generate Report</button>
         </form>
-        <form  id="collectionsFilterForm">
+        <form class="stack" id="collectionsFilterForm">
           <label>Collections for the Month of
             <select name="Month" id="collectionsMonthSelect">
               <option value="1">January</option><option value="2">February</option><option value="3">March</option>
