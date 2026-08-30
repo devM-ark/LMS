@@ -57,63 +57,6 @@ function setTodayDefault(inputId){
   if(el && !el.value) el.value = new Date().toISOString().slice(0,10);
 }
 
-/** Client-side PDF export (html2pdf.js, loaded in index.html <head>).
- *  Reuses the existing .no-print class — anything already hidden from
- *  printing (buttons, nav, close icons) is excluded from the PDF too.
- *
- *  Two html2canvas quirks this works around:
- *  1. html2canvas measures the target's position relative to the page's
- *     current scroll offset, not the element itself — without compensating
- *     for that, however far the page happened to be scrolled shows up as
- *     blank space at the top of the capture.
- *  2. Wide tables inside a horizontally-scrollable .table-scroll wrapper
- *     get their off-screen columns clipped, because forcing the wrapper
- *     to full width only in a cloned/detached document (via onclone) is
- *     unreliable — the browser can resolve percentage colgroup widths
- *     differently there. Instead we temporarily expand the real wrapper
- *     in the live DOM (guaranteeing a correct browser layout pass), then
- *     restore it afterward regardless of success or failure. */
-async function downloadAsPDF(elOrId, filename, orientation){
-  const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
-  if(!el){ showToast('Nothing to export yet.', true); return; }
-  if(typeof html2pdf === 'undefined'){ showToast('PDF library failed to load — check your connection and try again.', true); return; }
-
-  const scrollWraps = el.querySelectorAll('.table-scroll');
-  const restore = [];
-  scrollWraps.forEach(w => {
-    restore.push([w, w.style.overflow, w.style.width, w.style.maxWidth]);
-    w.style.overflow = 'visible';
-    w.style.width = 'max-content';
-    w.style.maxWidth = 'none';
-  });
-  // Let the browser actually reflow with the new widths before measuring/capturing.
-  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
-
-  try{
-    await html2pdf().set({
-      margin: 10,
-      filename: filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        scrollX: -window.scrollX,
-        scrollY: -window.scrollY,
-        windowWidth: Math.max(el.scrollWidth, el.offsetWidth),
-        ignoreElements: (element) => element.classList && element.classList.contains('no-print')
-      },
-      jsPDF: { unit: 'mm', format: 'a4', orientation: orientation || 'portrait' },
-      pagebreak: { mode: ['css', 'legacy'] }
-    }).from(el).save();
-  } finally {
-    restore.forEach(([w, overflow, width, maxWidth]) => {
-      w.style.overflow = overflow;
-      w.style.width = width;
-      w.style.maxWidth = maxWidth;
-    });
-  }
-}
-
 let toastTimer = null;
 function showToast(message, isError){
   const t = document.getElementById('appToast');
