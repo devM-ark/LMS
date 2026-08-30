@@ -96,8 +96,8 @@ form.grid-2 .note{grid-column:1/-1;}
 #soaContent h3, .borrower-soa-wrap h3{text-align:center;text-transform:uppercase;letter-spacing:.02em;font-size:19px;}
 .soa-subtitle{text-align:center;color:var(--muted);font-size:.75rem;margin-top:2px;}
 #soaContent h4, .borrower-soa-wrap h4{color:var(--navy);border-bottom:1px solid var(--line);padding-bottom:4px;margin-top:16px;text-align:left;}
-#soaContent table, .borrower-soa-wrap table{margin-top:8px;text-align:left;}
-#soaContent table td, #soaContent table th, .borrower-soa-wrap table td, .borrower-soa-wrap table th{text-align:left;}
+#soaContent table, .borrower-soa-wrap table{margin-top:8px;}
+.soa-account-summary td{text-align:left;}
 .soa-account-summary td:first-child{padding-right:28px;color:var(--muted);}
 .soa-borrower-line{margin:4px 0;}
 .soa-status-value{text-transform:uppercase;font-weight:700;letter-spacing:.03em;}
