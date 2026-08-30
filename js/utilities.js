@@ -74,10 +74,11 @@ function showToast(message, isError){
  *  show the exact same numbers/layout. */
 function buildSOAHTML(soa){
   const b = soa.borrower, c = soa.computed;
+  const companyName = soa.companyName || (STATE?.settings && STATE.settings.CompanyName) || "Manalo's Lending Corporation Inc.";
   return `
-    <h3 style="margin:0;">Manalo's Lending Corporation Inc.</h3>
+    <h3 style="margin:0;">${companyName}</h3>
     <div style="color:var(--muted);font-size:.75rem;">STATEMENT OF ACCOUNT — ${soa.soaNo}</div>
-    <h4>Borrower</h4>
+    <h4>Borrower Information</h4>
     <div class="soa-borrower-line">${b['Last Name']}, ${b['First Name']} &nbsp;•&nbsp; ID ${b['Borrower ID']}</div>
     <div class="soa-borrower-line">${b['Loan Type']} &nbsp;•&nbsp; Released ${fmtDate(b['Release Date'])}</div>
     <h4>Account Summary</h4>

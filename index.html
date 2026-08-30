@@ -148,25 +148,40 @@
     </section>
 
     <section id="tab-reports" class="admin-only">
-      <h2 class="section-title">Print Reports - Summary of Borrowers</h2>
-      <form class="stack grid-3" id="reportFilterForm" style="margin-bottom:16px;">
-        <label>Group
-          <select name="Group" id="reportGroupSelect">
-            <option value="Teachers">Teachers</option>
-            <option value="Tiaong">Tiaong</option>
-          </select>
-        </label>
-        <label>Loan Status
-          <select name="StatusFilter" id="reportStatusSelect">
-            <option value="active">Active Loans</option>
-            <option value="paid">Paid Loans</option>
-          </select>
-        </label>
-        <div class="btn-field-spacer">
-          <label style="visibility:hidden;">&nbsp;</label>
+      <h2 class="section-title">Print Reports</h2>
+      <div class="reports-grid">
+        <div class="reports-col-header">Summary of Borrowers</div>
+        <div class="reports-col-header">Summary of Collections</div>
+        <form class="reports-form" id="reportFilterForm">
+          <label>Group
+            <select name="Group" id="reportGroupSelect">
+              <option value="Teachers">Teachers</option>
+              <option value="Tiaong">Tiaong</option>
+            </select>
+          </label>
+          <label>Loan Status
+            <select name="StatusFilter" id="reportStatusSelect">
+              <option value="active">Active Loans</option>
+              <option value="paid">Paid Loans</option>
+            </select>
+          </label>
           <button class="btn gold" type="submit">Generate Report</button>
-        </div>
-      </form>
+        </form>
+        <form class="reports-form" id="collectionsFilterForm">
+          <label>Collections for the Month of
+            <select name="Month" id="collectionsMonthSelect">
+              <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+              <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+              <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+            </select>
+          </label>
+          <label>Year
+            <select name="Year" id="collectionsYearSelect"></select>
+          </label>
+          <button class="btn gold" type="submit">Generate Report</button>
+        </form>
+      </div>
 
       <div id="reportOutput">
         <div style="margin-bottom:10px;font-family:Arial,sans-serif;">
@@ -195,26 +210,7 @@
         </button>
       </div>
 
-      <h2 class="section-title" style="margin-top:36px;">Print Reports - Summary of Collections</h2>
-      <form class="stack grid-3" id="collectionsFilterForm" style="margin-bottom:16px;">
-        <label>Collections for the Month of
-          <select name="Month" id="collectionsMonthSelect">
-            <option value="1">January</option><option value="2">February</option><option value="3">March</option>
-            <option value="4">April</option><option value="5">May</option><option value="6">June</option>
-            <option value="7">July</option><option value="8">August</option><option value="9">September</option>
-            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
-          </select>
-        </label>
-        <label>Year
-          <select name="Year" id="collectionsYearSelect"></select>
-        </label>
-        <div class="btn-field-spacer">
-          <label style="visibility:hidden;">&nbsp;</label>
-          <button class="btn gold" type="submit">Generate Report</button>
-        </div>
-      </form>
-
-      <div id="collectionsOutput">
+      <div id="collectionsOutput" style="margin-top:36px;">
         <div style="margin-bottom:10px;font-family:Arial,sans-serif;">
           <div style="font-weight:700;font-size:1rem;color:var(--navy);" id="collectionsCompanyName"></div>
           <div style="font-size:.8rem;color:var(--muted);" id="collectionsSubtitle"></div>
