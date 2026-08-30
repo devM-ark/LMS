@@ -57,6 +57,22 @@ function setTodayDefault(inputId){
   if(el && !el.value) el.value = new Date().toISOString().slice(0,10);
 }
 
+/** Client-side PDF export (html2pdf.js, loaded in index.html <head>).
+ *  Reuses the existing .no-print class — anything already hidden from
+ *  printing (buttons, nav, close icons) is excluded from the PDF too. */
+function downloadAsPDF(elOrId, filename, orientation){
+  const el = typeof elOrId === 'string' ? document.getElementById(elOrId) : elOrId;
+  if(!el){ showToast('Nothing to export yet.', true); return; }
+  if(typeof html2pdf === 'undefined'){ showToast('PDF library failed to load — check your connection and try again.', true); return; }
+  html2pdf().set({
+    margin: 10,
+    filename: filename,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, ignoreElements: (element) => element.classList && element.classList.contains('no-print') },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: orientation || 'portrait' }
+  }).from(el).save();
+}
+
 let toastTimer = null;
 function showToast(message, isError){
   const t = document.getElementById('appToast');
