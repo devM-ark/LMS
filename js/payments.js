@@ -3,7 +3,7 @@ function renderPaymentBorrowerResults(query){
   if(!box) return;
   const q = (query||'').trim().toLowerCase();
   if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
-  const eligible = (STATE?.borrowers||[]).filter(b => b.status !== 'Paid');
+  const eligible = (STATE?.borrowers||[]).filter(b => (b.status !== 'Paid' && b.status !== 'Renewed'));
   const matches = eligible.filter(b=>{
     const idStr = String(b['Borrower ID']||'').toLowerCase();
     const nameStr = `${b['Last Name']||''} ${b['First Name']||''}`.toLowerCase();

@@ -121,6 +121,7 @@
         <div class="card card-clickable" onclick="focusActiveBorrowers()"><div class="n" id="dActive">—</div><div class="l">Active Loans</div></div>  
         <div class="card card-clickable" onclick="showNearlyDueModal()"><div class="n" id="dNearlyDue">—</div><div class="l">Nearly Due</div></div>
         <div class="card card-clickable" onclick="showPastDueModal()"><div class="n" id="dPastDue">—</div><div class="l">Past Due</div></div>
+        <div class="card card-clickable" onclick="showEligibleRenewalModal()"><div class="n" id="dEligibleRenewal">—</div><div class="l">Eligible for Renewal</div></div>
       </div>
       <h2 class="section-title" id="activeBorrowersSection">Active Borrowers</h2>
       <input type="text" id="borrowerSearchInput" placeholder="Search by name or ID…" style="width:100%;font-family:Arial,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:4px;font-size:.9rem;margin-bottom:10px;background:#fff;">
@@ -467,6 +468,23 @@
   </div>
 </div>
 
+<div class="modal-backdrop" id="eligibleRenewalModal">
+  <div class="modal" style="max-width:820px;">
+    <button class="modal-close" onclick="closeModal('eligibleRenewalModal')"><svg viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg></button>
+    <h3>Eligible for Renewal</h3>
+    <div class="table-scroll">
+      <table class="status-modal-table">
+        <colgroup>
+          <col style="width:18%"><col style="width:14%"><col style="width:12%">
+          <col style="width:12%"><col style="width:12%"><col style="width:12%"><col style="width:12%">
+        </colgroup>
+        <thead><tr><th>Name</th><th>Loan Type</th><th>Released Date</th><th>Loan Amount</th><th>Total Paid</th><th>Remaining Balance</th><th class="no-print">Renew</th></tr></thead>
+        <tbody id="eligibleRenewalModalBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <div class="modal-backdrop" id="receiptModal">
   <div class="modal" style="max-width:700px;">
     <button class="modal-close no-print" onclick="closeModal('receiptModal')"><svg viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg></button>
@@ -546,6 +564,29 @@
     <h3>Before Releasing This Loan</h3>
     <div id="addOnDiminishingNoticeText" style="font-size:.9rem;line-height:1.5;margin-top:8px;"></div>
     <button class="btn gold" style="margin-top:16px;width:100%;" onclick="closeModal('addOnDiminishingNoticeModal')">Got it</button>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="renewLoanModal">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closeModal('renewLoanModal')"><svg viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg></button>
+    <h3>Renew Loan</h3>
+    <div id="renewLoanSummary" style="font-size:.85rem;color:var(--muted);margin:6px 0 14px;line-height:1.6;"></div>
+    <form class="stack" id="renewLoanForm" style="border:none;padding:0;">
+      <label>New Loan Amount<input name="newAmount" id="renewLoanAmountInput" type="number" required></label>
+      <div id="renewLoanPreview" style="font-size:.82rem;color:var(--navy);min-height:1.4em;"></div>
+      <button class="btn gold" type="submit">Confirm Renewal</button>
+      <div class="err" id="renewLoanErr"></div>
+    </form>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="renewLoanNoticeModal">
+  <div class="modal" style="max-width:420px;">
+    <button class="modal-close" onclick="closeModal('renewLoanNoticeModal')"><svg viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg></button>
+    <h3>Loan Renewed</h3>
+    <div id="renewLoanNoticeText" style="font-size:.9rem;line-height:1.5;margin-top:8px;"></div>
+    <button class="btn gold" style="margin-top:16px;width:100%;" onclick="closeModal('renewLoanNoticeModal')">Got it</button>
   </div>
 </div>
 

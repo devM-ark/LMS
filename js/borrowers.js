@@ -37,11 +37,13 @@ function renderBorrowersTable(){
   const q = (borrowerSearchQuery || '').trim().toLowerCase();
   // Default view: Active Borrowers only (any unpaid loan). Searching reaches
   // every borrower, including Paid ones, so paid history is still findable.
-  const pool = q ? borrowers : borrowers.filter(b => b.status !== 'Paid');
+  const pool = q ? borrowers : borrowers.filter(b => (b.status !== 'Paid' && b.status !== 'Renewed'));
   let visibleBorrowers = q ? pool.filter(b => {
     const idStr = String(b['Borrower ID'] || '').toLowerCase();
+    const displayIdStr = String(formatBorrowerId(b) || '').toLowerCase();
+    const originalIdStr = String(b['Original Borrower ID'] || '').toLowerCase();
     const nameStr = `${b['Last Name']||''} ${b['First Name']||''}`.toLowerCase();
-    return idStr.includes(q) || nameStr.includes(q);
+    return idStr.includes(q) || displayIdStr.includes(q) || originalIdStr.includes(q) || nameStr.includes(q);
   }) : pool;
   if(masterlistSort.key){
     const kind = masterlistSort.key === 'cutoffAmountDue' ? 'number' : (masterlistSort.key === 'nextDue' ? 'date' : (masterlistSort.key === 'Borrower ID' ? 'number' : 'text'));
@@ -50,7 +52,7 @@ function renderBorrowersTable(){
   updateSortHeaderClasses('masterlist', masterlistSort.key, masterlistSort.dir);
   mtbody.innerHTML = visibleBorrowers.length ? visibleBorrowers.map(b=>`
     <tr>
-      <td>${b['Borrower ID']}</td>
+      <td>${formatBorrowerId(b)}</td>
       <td>${b['Last Name']}, ${b['First Name']}</td>
       <td>${b['Loan Type']}</td>
       <td>${fmt(b.cutoffAmountDue)}</td>

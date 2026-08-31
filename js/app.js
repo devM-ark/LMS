@@ -143,9 +143,10 @@ function render(){
     document.getElementById('dMonthCollectedLabel').textContent = 'Total Collected for ' + STATE.monthLabel;
     document.getElementById('dMonthUnpaidLabel').textContent = 'Total Unpaid for ' + STATE.monthLabel;
   }
-  document.getElementById('dActive').textContent = borrowers.filter(b => b.status !== 'Paid').length;
+  document.getElementById('dActive').textContent = borrowers.filter(b => (b.status !== 'Paid' && b.status !== 'Renewed')).length;
   document.getElementById('dPastDue').textContent = counts['Past Due']||0;
   document.getElementById('dNearlyDue').textContent = counts['Nearly Due']||0;
+  document.getElementById('dEligibleRenewal').textContent = counts['Eligible for Renewal']||0;
 
   if(STATE.settings){
     if(STATE.settings.CompanyName) document.getElementById('companyNameHeader').textContent = STATE.settings.CompanyName;

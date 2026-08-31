@@ -68,6 +68,20 @@ function showToast(message, isError){
   toastTimer = setTimeout(()=>{ t.classList.remove('show'); }, 5000);
 }
 
+/** Formats a borrower's displayed ID. Renewed loans show as
+ *  "{Original ID}-R01", "-R02", etc. — purely a display label built from
+ *  "Original Borrower ID" / "Renewal No." (set by renewLoan() on the
+ *  backend). The REAL stored Borrower ID (used for sorting, logins, and
+ *  every join) is never touched — this only changes what a human sees. */
+function formatBorrowerId(b){
+  const renewalNo = Number(b['Renewal No.']) || 0;
+  const originalId = b['Original Borrower ID'];
+  if(renewalNo > 0 && originalId){
+    return `${originalId}-R${String(renewalNo).padStart(2,'0')}`;
+  }
+  return b['Borrower ID'];
+}
+
 /** Shared Statement of Account renderer — used by the staff SOA modal
  *  (borrowers.js showSOA) and the Borrower/Viewer self-service portal
  *  (borrower-portal.js). Keeping this in one place means both views always
@@ -79,8 +93,9 @@ function buildSOAHTML(soa){
     <h3 style="margin:0;">${companyName}</h3>
     <div class="soa-subtitle">STATEMENT OF ACCOUNT — ${soa.soaNo}</div>
     <h4>Borrower Information</h4>
-    <div class="soa-borrower-line">${b['Last Name']}, ${b['First Name']} &nbsp;•&nbsp; ID ${b['Borrower ID']}</div>
+    <div class="soa-borrower-line">${b['Last Name']}, ${b['First Name']} &nbsp;•&nbsp; ID ${formatBorrowerId(b)}</div>
     <div class="soa-borrower-line">${b['Loan Type']} &nbsp;•&nbsp; Released ${fmtDate(b['Release Date'])}</div>
+    ${Number(b['Renewal No.']) > 0 ? `<div class="soa-renewal-note">This is a renewed loan (Renewal #${Number(b['Renewal No.'])}), originally released to Borrower ID ${b['Original Borrower ID']}.</div>` : ''}
     <h4>Account Summary</h4>
     <table class="soa-account-summary">
       <tr><td>Loan Amount</td><td>${fmt(b['Loan Amount'])}</td></tr>

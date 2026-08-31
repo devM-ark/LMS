@@ -1,4 +1,6 @@
-.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px;}
+.cards{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;margin-bottom:18px;}
+.cards .card:nth-child(-n+6){grid-column:span 4;}
+.cards .card:nth-child(n+7){grid-column:span 3;}
 .card{background:#fff;border:1px solid var(--line);border-radius:6px;padding:8px 12px;text-align:center;}
 .card-clickable{cursor:pointer;transition:box-shadow .15s,border-color .15s;}
 .card-clickable:hover{box-shadow:0 2px 8px rgba(8,24,38,.12);border-color:var(--gold);}
@@ -41,6 +43,7 @@ tr:last-child td{border-bottom:none;}
 .status-Due-Today{background:#FCE3C3;color:#C1651F;}
 .status-Past-Due{background:#F7E3E1;color:var(--bad);}
 .status-Eligible-for-Renewal{background:#F7E3E1;color:var(--bad);}
+.status-Renewed{background:#E9E9E9;color:var(--ink);font-weight:800;}
 .status-PAID{background:#E9E9E9;color:var(--ink);font-weight:800;}
 .status-UNPAID{background:#FBF0DC;color:var(--warn);}
 .status-PAST-DUE{background:#F7E3E1;color:var(--bad);}
@@ -101,6 +104,7 @@ form.grid-2 .note{grid-column:1/-1;}
 .soa-account-summary td:first-child{padding-right:28px;color:var(--muted);}
 .soa-borrower-line{margin:4px 0;}
 .soa-status-value{text-transform:uppercase;font-weight:700;letter-spacing:.03em;}
+.soa-renewal-note{background:#F3F0E8;border-left:3px solid var(--gold);padding:6px 10px;margin:6px 0 4px;font-size:.75rem;color:var(--muted);border-radius:3px;}
 .soa-data-table th, .soa-data-table td{text-align:center;}
 .soa-data-table th.amt, .soa-data-table td.amt{text-align:right;}
 .schedule-wrap{max-height:260px;overflow-y:auto;}

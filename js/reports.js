@@ -13,7 +13,7 @@ document.getElementById('reportFilterForm')?.addEventListener('submit', (e)=>{
   const borrowers = all.filter(b => {
     const bGroup = String(b['Group']||'Teachers').trim().toLowerCase();
     const matchesGroup = bGroup === group.toLowerCase();
-    const matchesStatus = statusFilter === 'paid' ? b.status === 'Paid' : b.status !== 'Paid';
+    const matchesStatus = statusFilter === 'paid' ? (b.status === 'Paid' || b.status === 'Renewed') : (b.status !== 'Paid' && b.status !== 'Renewed');
     return matchesGroup && matchesStatus;
   }).sort((a,b) => {
     const an = `${a['Last Name']||''} ${a['First Name']||''}`.trim().toLowerCase();
@@ -130,3 +130,87 @@ function showPastDueModal(){
   }).join('') : `<tr><td colspan="5" class="empty">No past due borrowers</td></tr>`;
   openModal('pastDueModal');
 }
+
+function showEligibleRenewalModal(){
+  const tbody = document.getElementById('eligibleRenewalModalBody');
+  const list = (STATE?.borrowers||[]).filter(b => b.status === 'Eligible for Renewal');
+  tbody.innerHTML = list.length ? list.map(b=>`
+    <tr>
+      <td>${b['Last Name']}, ${b['First Name']}</td>
+      <td>${b['Loan Type']}</td>
+      <td>${fmtDate(b['Release Date'])}</td>
+      <td>${fmt(b['Loan Amount'])}</td>
+      <td>${fmt(b.totalPaid)}</td>
+      <td>${fmt(b.balance)}</td>
+      <td class="no-print"><button class="btn small gold" onclick="openRenewLoanModal(${b['Borrower ID']})">Renew</button></td>
+    </tr>`).join('') : `<tr><td colspan="7" class="empty">No borrowers eligible for renewal</td></tr>`;
+  openModal('eligibleRenewalModal');
+}
+
+let renewingBorrower = null;
+
+function openRenewLoanModal(borrowerId){
+  const b = (STATE?.borrowers||[]).find(x => x['Borrower ID'] === borrowerId);
+  if(!b){ showToast('Borrower not found.', true); return; }
+  renewingBorrower = b;
+  document.getElementById('renewLoanForm').reset();
+  document.getElementById('renewLoanErr').textContent = '';
+  document.getElementById('renewLoanPreview').textContent = '';
+  document.getElementById('renewLoanSummary').innerHTML =
+    `<b>${b['Last Name']}, ${b['First Name']}</b> (ID ${formatBorrowerId(b)})<br>` +
+    `Loan Type: <b>${b['Loan Type']}</b> — locked, cannot change on renewal<br>` +
+    `Current Outstanding Balance: <b>${fmt(b.balance)}</b>`;
+  openModal('renewLoanModal');
+}
+
+document.getElementById('renewLoanAmountInput')?.addEventListener('input', (e)=>{
+  const previewEl = document.getElementById('renewLoanPreview');
+  if(!renewingBorrower){ previewEl.textContent = ''; return; }
+  const amt = Number(e.target.value) || 0;
+  const balance = Number(renewingBorrower.balance) || 0;
+  if(amt <= 0){ previewEl.textContent = ''; return; }
+  if(amt <= balance){
+    previewEl.innerHTML = `<span style="color:var(--bad);">Must be greater than the current balance of ${fmt(balance)}.</span>`;
+  } else {
+    previewEl.innerHTML = `Borrower will receive <b>${fmt(amt - balance)}</b> upon release (after the ${fmt(balance)} balance is rolled over).`;
+  }
+});
+
+document.getElementById('renewLoanForm').addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  if(!renewingBorrower) return;
+  const btn = e.target.querySelector('button[type=submit]');
+  if(btn.disabled) return;
+  const errEl = document.getElementById('renewLoanErr');
+  errEl.textContent = '';
+  const newAmount = Number(document.getElementById('renewLoanAmountInput').value) || 0;
+  const balance = Number(renewingBorrower.balance) || 0;
+  if(newAmount <= balance){ errEl.textContent = `New amount must be greater than the current balance of ${fmt(balance)}.`; return; }
+
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Saving…';
+  errEl.textContent = 'Please wait while we process the renewal.';
+  errEl.style.color = 'var(--muted)';
+  try{
+    const newBorrowerId = computeNextBorrowerId();
+    const out = await postAction('renewLoan', {
+      oldBorrowerId: renewingBorrower['Borrower ID'],
+      newBorrowerId,
+      newLoanAmount: newAmount
+    });
+    if(out && out.success){
+      closeModal('renewLoanModal');
+      closeModal('eligibleRenewalModal');
+      const name = `${renewingBorrower['First Name']} ${renewingBorrower['Last Name']}`;
+      document.getElementById('renewLoanNoticeText').innerHTML =
+        `The previous balance of <b>${fmt(out.oldBalance)}</b> has been rolled into this renewal.<br><br>` +
+        `Please hand over <b>${fmt(out.netProceeds)}</b> to <b>${name}</b> upon release.`;
+      openModal('renewLoanNoticeModal');
+      await loadData();
+      renderBorrowersTable();
+    } else {
+      errEl.textContent = '';
+    }
+  } finally { btn.disabled = false; btn.textContent = originalLabel; }
+});
