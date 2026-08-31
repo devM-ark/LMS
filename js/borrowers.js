@@ -77,9 +77,11 @@ function refreshLoanAmountField(){
   if(!typeSel || !wrap) return;
   const type = typeSel.value;
   const group = groupSel ? groupSel.value : 'Teachers';
-  // Add-on Diminishing and Bonus Loan are one-off, borrower-specific amounts —
-  // not repeatable rate tiers — so both always get a plain manual entry field.
-  if(type === 'Add-on Diminishing' || isBonusLoanType(type)){
+  // Add-on Diminishing is a one-off, borrower-specific amount, not a repeatable
+  // rate tier, so it always gets a plain manual entry field. Bonus Loan DOES
+  // have configured tiers (amount + term + interest fee in Loan Types &
+  // Rates) — it belongs in the same preset-dropdown path as Regular/Amortized.
+  if(type === 'Add-on Diminishing'){
     wrap.innerHTML = `<input name="Loan Amount" id="borrowerLoanAmountInput" type="number" required placeholder="Enter the principal amount">`;
   } else {
     const tiers = [...new Set((STATE?.loanTypes||[])
@@ -136,7 +138,7 @@ function updateCutoffAuto(){
   const group = groupEl ? groupEl.value : 'Teachers';
   hint.style.display = 'none';
 
-  if(type === 'Add-on Diminishing' || isBonusLoanType(type)){
+  if(type === 'Add-on Diminishing'){
     cutoffInput.value = '';
     cutoffInput.placeholder = 'N/A';
     return;
@@ -169,6 +171,9 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
     const out = await postAction('addBorrower', {data});
     if(out){
       showToast('Borrower added successfully.');
+      if(data['Loan Type'] === 'Add-on Diminishing'){
+        showAddOnDiminishingNotice(data);
+      }
       e.target.reset();
       setTodayDefault('borrowerReleaseDateInput');
       await loadData();
@@ -179,6 +184,22 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
     }
   } finally { btn.disabled = false; btn.textContent = originalLabel; }
 });
+
+/** Add-on Diminishing loans have one month's interest deducted upfront at
+ *  release (matches the 5% compounding rate used in computeAddOnDiminishing
+ *  on the backend — LoanCalculationService.gs — keep these in sync if that
+ *  rate ever changes). This just reminds staff how much cash to actually
+ *  hand over; it doesn't touch the stored Loan Amount or balance math. */
+function showAddOnDiminishingNotice(data){
+  const amount = Number(data['Loan Amount']) || 0;
+  const interest = Math.round(amount * 0.05);
+  const net = amount - interest;
+  const name = `${data['First Name'] || ''} ${data['Last Name'] || ''}`.trim() || 'The borrower';
+  document.getElementById('addOnDiminishingNoticeText').innerHTML =
+    `Please deduct the amount <b>${fmt(interest)}</b> before releasing the loan.<br><br>` +
+    `<b>${name}</b> will receive the amount of <b>${fmt(net)}</b> upon release.`;
+  openModal('addOnDiminishingNoticeModal');
+}
 
 document.getElementById('editForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
