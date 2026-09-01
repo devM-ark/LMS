@@ -224,8 +224,12 @@ function openEdit(id){
   const b = (STATE.borrowers||[]).find(x => x['Borrower ID'] === id);
   if(!b) return;
   const form = document.getElementById('editForm');
-  ['Borrower ID','Last Name','First Name','Loan Type','Release Date','Contact Number','Address']
+  ['Borrower ID','Last Name','First Name','Loan Type','Contact Number','Address']
     .forEach(k => { if(form[k]) form[k].value = b[k] ?? ''; });
+  // Release Date comes back as a full ISO timestamp (e.g. "2026-08-30T00:00:00.000Z"),
+  // but a <input type="date"> only accepts the plain yyyy-mm-dd portion — anything
+  // else is silently rejected and the field just shows empty.
+  form['Release Date'].value = b['Release Date'] ? String(b['Release Date']).slice(0, 10) : '';
   refreshEditLoanAmountField(b);
   openModal('editModal');
 }
