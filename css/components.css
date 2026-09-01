@@ -105,6 +105,10 @@ form.grid-2 .note{grid-column:1/-1;}
 .soa-borrower-line{margin:4px 0;}
 .soa-status-value{text-transform:uppercase;font-weight:700;letter-spacing:.03em;}
 .soa-renewal-note{background:#F3F0E8;border-left:3px solid var(--gold);padding:6px 10px;margin:6px 0 4px;font-size:.75rem;color:var(--muted);border-radius:3px;}
+.renew-summary-row{display:flex;justify-content:space-between;gap:16px;padding:4px 0;border-bottom:1px solid var(--line);}
+.renew-summary-row:last-child{border-bottom:none;font-weight:700;color:var(--navy);}
+.renew-summary-row span:first-child{color:var(--muted);}
+.renew-summary-row span:last-child{text-align:right;}
 .soa-data-table th, .soa-data-table td{text-align:center;}
 .soa-data-table th.amt, .soa-data-table td.amt{text-align:right;}
 .schedule-wrap{max-height:260px;overflow-y:auto;}

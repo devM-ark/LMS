@@ -19,6 +19,9 @@
   #paymentsTable{ table-layout:auto; width:max-content; min-width:100%; }
   #paymentsTable col{ width:auto !important; }
   #paymentsTable td, #paymentsTable th{ white-space:nowrap; overflow:visible; text-overflow:clip; padding:8px 10px; }
+  .status-modal-table{ table-layout:auto; width:max-content; min-width:100%; }
+  .status-modal-table col{ width:auto !important; }
+  .status-modal-table td, .status-modal-table th{ white-space:nowrap; overflow:visible; text-overflow:clip; padding:8px 10px; }
 }
 
 @media(max-width:640px){

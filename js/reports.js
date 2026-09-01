@@ -157,9 +157,10 @@ function openRenewLoanModal(borrowerId){
   document.getElementById('renewLoanErr').textContent = '';
   document.getElementById('renewLoanPreview').textContent = '';
   document.getElementById('renewLoanSummary').innerHTML =
-    `<b>${b['Last Name']}, ${b['First Name']}</b> (ID ${formatBorrowerId(b)})<br>` +
-    `Loan Type: <b>${b['Loan Type']}</b></b>` +
-    `Current Outstanding Balance: <b>${fmt(b.balance)}</b>`;
+    `<div class="renew-summary-row"><span>Full Name</span><span>${b['First Name']} ${b['Last Name']}</span></div>` +
+    `<div class="renew-summary-row"><span>Borrower ID</span><span>${formatBorrowerId(b)}</span></div>` +
+    `<div class="renew-summary-row"><span>Loan Type</span><span>${b['Loan Type']}</span></div>` +
+    `<div class="renew-summary-row"><span>Outstanding Balance</span><span>${fmt(b.balance)}</span></div>`;
   openModal('renewLoanModal');
 }
 
