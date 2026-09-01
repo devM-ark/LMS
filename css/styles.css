@@ -1,6 +1,8 @@
 :root{
-  --navy:#0F2A3E; --navy-deep:#081826; --gold:#C79A3C; --paper:#F6F3EC;
-  --ink:#1B1F23; --line:#DDD5C4; --good:#2E7D4F; --warn:#B8862E; --bad:#B23A32; --muted:#6B7178;
+  --navy:#00638E; --navy-deep:#141414; --gold:#E5C690; --paper:#F4F7F9;
+  --ink:#141414; --line:#E3EAEE; --good:#183630; --warn:#C97C2C; --bad:#A6403D; --muted:#5F7C8A;
+  --tint:#BFD8E3;
+  --sidebar-gradient:linear-gradient(180deg,#000000 0%,#004A6B 45%,#00638E 78%,#8CB9CC 100%);
 }
 *{box-sizing:border-box;}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:Arial,sans-serif;}
@@ -14,10 +16,10 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:Arial,sans-se
 }
 .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); pointer-events:auto; }
 
-h2.section-title{font-size:.95rem;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);font-family:Arial,sans-serif;font-weight:700;border-bottom:2px solid var(--gold);padding-bottom:6px;margin:22px 0 12px;display:flex;justify-content:space-between;align-items:center;transition:background-color .3s, box-shadow .3s;}
-h2.section-flash{background-color:#FBF0DC;box-shadow:0 0 0 6px #FBF0DC;border-radius:3px;}
+h2.section-title{font-size:1rem;letter-spacing:.01em;color:var(--ink);font-family:Arial,sans-serif;font-weight:800;margin:26px 0 14px;padding-left:12px;border-left:4px solid var(--navy);display:flex;justify-content:space-between;align-items:center;transition:background-color .3s, box-shadow .3s;}
+h2.section-flash{background-color:var(--tint);box-shadow:0 0 0 6px var(--tint);border-radius:3px;}
 
 .empty{font-family:Arial,sans-serif;color:var(--muted);font-size:.85rem;padding:20px;text-align:center;}
-.note{font-family:Arial,sans-serif;font-size:.75rem;color:var(--muted);background:#FBF0DC;border:1px solid #E9D9AE;padding:10px 12px;border-radius:6px;margin-bottom:16px;}
+.note{font-family:Arial,sans-serif;font-size:.75rem;color:var(--ink);background:var(--tint);padding:10px 12px;border-radius:6px;margin-bottom:16px;}
 .row-actions{display:flex;gap:6px;}
 .err{font-family:Arial,sans-serif;font-size:11px;text-align:center;min-height:1em;}
