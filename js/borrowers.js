@@ -72,6 +72,14 @@ function computeNextBorrowerId(){
   return prefix + String(maxSeq + 1).padStart(3, '0');
 }
 
+/** Shared by Add Borrower, Edit Borrower, and Renew Loan — returns the
+ *  sorted list of preset amount tiers configured for a loan type + group. */
+function getAmountTiersForType(type, group){
+  return [...new Set((STATE?.loanTypes||[])
+    .filter(lt => lt.LoanType === type && (!lt.Group || lt.Group === group || lt.Group === 'Both'))
+    .map(lt => Number(lt.AmountTier)).filter(n => !isNaN(n)))].sort((a,b) => a-b);
+}
+
 function refreshLoanAmountField(){
   const typeSel = document.getElementById('borrowerLoanTypeSelect');
   const groupSel = document.getElementById('borrowerGroupSelect');
@@ -86,9 +94,7 @@ function refreshLoanAmountField(){
   if(type === 'Add-on Diminishing'){
     wrap.innerHTML = `<input name="Loan Amount" id="borrowerLoanAmountInput" type="number" required placeholder="Enter the principal amount">`;
   } else {
-    const tiers = [...new Set((STATE?.loanTypes||[])
-      .filter(lt => lt.LoanType === type && (!lt.Group || lt.Group === group || lt.Group === 'Both'))
-      .map(lt => Number(lt.AmountTier)).filter(n => !isNaN(n)))].sort((a,b) => a-b);
+    const tiers = getAmountTiersForType(type, group);
     if(tiers.length){
       wrap.innerHTML = `<select name="Loan Amount" id="borrowerLoanAmountInput" required>${tiers.map(t=>`<option value="${t}">₱${t.toLocaleString()}</option>`).join('')}</select>`;
     } else {
@@ -218,34 +224,49 @@ function openEdit(id){
   const b = (STATE.borrowers||[]).find(x => x['Borrower ID'] === id);
   if(!b) return;
   const form = document.getElementById('editForm');
-  ['Borrower ID','Last Name','First Name','Loan Type','Loan Amount','Term (Months)','Amount/Cut-off','Release Date','Contact Number','Address']
+  ['Borrower ID','Last Name','First Name','Loan Type','Release Date','Contact Number','Address']
     .forEach(k => { if(form[k]) form[k].value = b[k] ?? ''; });
+  refreshEditLoanAmountField(b);
   openModal('editModal');
-  loadLoginInfoForEdit(id);
 }
 
-let editingBorrowerId = null;
-async function loadLoginInfoForEdit(id){
-  editingBorrowerId = id;
-  const block = document.getElementById('loginInfoBlock');
-  const textEl = document.getElementById('loginInfoText');
-  if(!block || !isAdmin() || !API_URL) return;
-  block.style.display = '';
-  textEl.textContent = 'Loading…';
-  const out = await postAction('getBorrowerLoginInfo', {borrowerId: id});
-  if(!out || out.error){ textEl.textContent = 'No login account yet — one is created automatically when the borrower is added.'; return; }
-  textEl.innerHTML = `Username: <b>${out.username}</b>` + (out.mustChangePassword ? ' <span style="color:var(--muted);">(has not changed default password yet)</span>' : '');
-}
+/** Populates the Edit Borrower Loan Amount field the same way Add Borrower
+ *  does (preset tier dropdown, or manual entry for Add-on Diminishing), pre-
+ *  selected to the borrower's current amount, and keeps Term/Amount-per-
+ *  cutoff auto-filled + locked from whichever tier matches. */
+function refreshEditLoanAmountField(b){
+  const wrap = document.getElementById('editLoanAmountFieldWrap');
+  const type = b['Loan Type'];
+  const group = b['Group'] || 'Teachers';
+  const currentAmount = Number(b['Loan Amount']) || '';
 
-async function resetBorrowerLoginPassword(){
-  if(!editingBorrowerId) return;
-  if(!confirm('Reset this borrower\'s password back to the default (their last name)?')) return;
-  const out = await postAction('resetBorrowerPassword', {borrowerId: editingBorrowerId});
-  if(out && out.success){
-    document.getElementById('borrowerLoginInfoResultText').textContent = 'Password has been reset to the default. The borrower will be asked to set a new password on next login.';
-    openModal('borrowerLoginInfoResultModal');
-    loadLoginInfoForEdit(editingBorrowerId);
+  if(type === 'Add-on Diminishing'){
+    wrap.innerHTML = `<input name="Loan Amount" id="editLoanAmountInput" type="number" required value="${currentAmount}">`;
+  } else {
+    const tiers = getAmountTiersForType(type, group);
+    if(tiers.length){
+      wrap.innerHTML = `<select name="Loan Amount" id="editLoanAmountInput" required>${tiers.map(t=>`<option value="${t}" ${t===currentAmount?'selected':''}>₱${t.toLocaleString()}</option>`).join('')}</select>`;
+    } else {
+      wrap.innerHTML = `<input name="Loan Amount" id="editLoanAmountInput" type="number" required value="${currentAmount}">`;
+    }
   }
+
+  const updateLockedFields = () => {
+    const amtField = document.getElementById('editLoanAmountInput');
+    const amt = Number(amtField.value) || 0;
+    const form = document.getElementById('editForm');
+    if(type === 'Add-on Diminishing'){
+      form['Term (Months)'].value = '';
+      form['Amount/Cut-off'].value = '';
+      return;
+    }
+    const match = (STATE?.loanTypes||[]).find(lt => lt.LoanType === type && Number(lt.AmountTier) === amt && (!lt.Group || lt.Group === group || lt.Group === 'Both'));
+    form['Term (Months)'].value = match ? (match.TermMonths ?? '') : '';
+    form['Amount/Cut-off'].value = match ? (match.AmountPerCutoff ?? '') : '';
+  };
+  const newField = document.getElementById('editLoanAmountInput');
+  newField.addEventListener(newField.tagName === 'SELECT' ? 'change' : 'input', updateLockedFields);
+  updateLockedFields();
 }
 
 function openAddBorrowerModal(){

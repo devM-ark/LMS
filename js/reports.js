@@ -153,7 +153,6 @@ function openRenewLoanModal(borrowerId){
   const b = (STATE?.borrowers||[]).find(x => x['Borrower ID'] === borrowerId);
   if(!b){ showToast('Borrower not found.', true); return; }
   renewingBorrower = b;
-  document.getElementById('renewLoanForm').reset();
   document.getElementById('renewLoanErr').textContent = '';
   document.getElementById('renewLoanPreview').textContent = '';
   document.getElementById('renewLoanSummary').innerHTML =
@@ -161,13 +160,38 @@ function openRenewLoanModal(borrowerId){
     `<div class="renew-summary-row"><span>Borrower ID</span><span>${formatBorrowerId(b)}</span></div>` +
     `<div class="renew-summary-row"><span>Loan Type</span><span>${b['Loan Type']}</span></div>` +
     `<div class="renew-summary-row"><span>Outstanding Balance</span><span>${fmt(b.balance)}</span></div>`;
+  refreshRenewLoanAmountField(b);
   openModal('renewLoanModal');
 }
 
-document.getElementById('renewLoanAmountInput')?.addEventListener('input', (e)=>{
+/** Populates the renewal amount field the same way Add/Edit Borrower do —
+ *  a dropdown of the loan type's configured preset tiers, or a manual entry
+ *  field only for Add-on Diminishing (which has never had preset tiers). */
+function refreshRenewLoanAmountField(b){
+  const wrap = document.getElementById('renewLoanAmountFieldWrap');
+  const type = b['Loan Type'];
+  const group = b['Group'] || 'Teachers';
+
+  if(type === 'Add-on Diminishing'){
+    wrap.innerHTML = `<input name="newAmount" id="renewLoanAmountInput" type="number" required>`;
+  } else {
+    const tiers = getAmountTiersForType(type, group);
+    if(tiers.length){
+      wrap.innerHTML = `<select name="newAmount" id="renewLoanAmountInput" required><option value="" disabled selected>Select an amount…</option>${tiers.map(t=>`<option value="${t}">₱${t.toLocaleString()}</option>`).join('')}</select>`;
+    } else {
+      wrap.innerHTML = `<input name="newAmount" id="renewLoanAmountInput" type="number" required>`;
+    }
+  }
+  const field = document.getElementById('renewLoanAmountInput');
+  field.addEventListener(field.tagName === 'SELECT' ? 'change' : 'input', updateRenewLoanPreview);
+  updateRenewLoanPreview();
+}
+
+function updateRenewLoanPreview(){
   const previewEl = document.getElementById('renewLoanPreview');
-  if(!renewingBorrower){ previewEl.textContent = ''; return; }
-  const amt = Number(e.target.value) || 0;
+  const field = document.getElementById('renewLoanAmountInput');
+  if(!renewingBorrower || !field){ previewEl.textContent = ''; return; }
+  const amt = Number(field.value) || 0;
   const balance = Number(renewingBorrower.balance) || 0;
   if(amt <= 0){ previewEl.textContent = ''; return; }
   if(amt <= balance){
@@ -175,7 +199,7 @@ document.getElementById('renewLoanAmountInput')?.addEventListener('input', (e)=>
   } else {
     previewEl.innerHTML = `Borrower will receive <b>${fmt(amt - balance)}</b> upon release (after the ${fmt(balance)} balance is rolled over).`;
   }
-});
+}
 
 document.getElementById('renewLoanForm').addEventListener('submit', async (e)=>{
   e.preventDefault();

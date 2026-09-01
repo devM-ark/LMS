@@ -531,30 +531,15 @@
       <input type="hidden" name="Borrower ID">
       <label>Last Name<input name="Last Name" required></label>
       <label>First Name<input name="First Name" required></label>
-      <label>Loan Type
-        <select name="Loan Type"><option>Regular Loan</option><option>Amortized Loan</option><option>Add-on Diminishing</option><option>Bonus Loan</option></select>
-      </label>
-      <label>Loan Amount<input name="Loan Amount" type="number"></label>
-      <label>Term (Months)<input name="Term (Months)" type="number"></label>
-      <label>Amount per Cutoff<input name="Amount/Cut-off" type="number"></label>
-      <label>Release Date<input name="Release Date" type="date"></label>
+      <label>Loan Type<input name="Loan Type" readonly style="background:#EEF3F5;cursor:not-allowed;"></label>
+      <label>Loan Amount<div id="editLoanAmountFieldWrap"></div></label>
+      <label>Term (Months)<input name="Term (Months)" readonly style="background:#EEF3F5;cursor:not-allowed;"></label>
+      <label>Amount per Cutoff<input name="Amount/Cut-off" readonly style="background:#EEF3F5;cursor:not-allowed;"></label>
+      <label>Release Date<input name="Release Date" type="date" readonly style="background:#EEF3F5;cursor:not-allowed;"></label>
       <label>Contact Number<input name="Contact Number"></label>
       <label>Address<input name="Address"></label>
       <button class="btn gold" type="submit">Save Changes</button>
     </form>
-    <div class="admin-only" id="loginInfoBlock" style="display:none;margin-top:16px;padding-top:14px;border-top:1px solid var(--line);">
-      <h4 style="margin:0 0 6px;">Borrower Login Account</h4>
-      <div id="loginInfoText" style="font-size:.82rem;color:var(--muted);">Loading…</div>
-      <button class="btn small ghost superadmin-only" style="margin-top:8px;" onclick="resetBorrowerLoginPassword()">Reset to Default Password</button>
-    </div>
-  </div>
-</div>
-
-<div class="modal-backdrop" id="borrowerLoginInfoResultModal">
-  <div class="modal" style="max-width:360px;">
-    <button class="modal-close" onclick="closeModal('borrowerLoginInfoResultModal')"><svg viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg></button>
-    <h3>Password Reset</h3>
-    <div id="borrowerLoginInfoResultText" style="font-size:.85rem;"></div>
   </div>
 </div>
 
@@ -573,7 +558,7 @@
     <h3>Renew Loan</h3>
     <div id="renewLoanSummary" style="font-size:.85rem;color:var(--muted);margin:6px 0 14px;line-height:1.6;"></div>
     <form class="stack" id="renewLoanForm" style="border:none;padding:0;">
-      <label>New Loan Amount<input name="newAmount" id="renewLoanAmountInput" type="number" required></label>
+      <label>New Loan Amount<div id="renewLoanAmountFieldWrap"></div></label>
       <div id="renewLoanPreview" style="font-size:.82rem;color:var(--navy);min-height:1.4em;"></div>
       <button class="btn gold" type="submit">Confirm Renewal</button>
       <div class="err" id="renewLoanErr"></div>
