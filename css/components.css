@@ -113,6 +113,7 @@ form.grid-2 .note{grid-column:1/-1;}
 .renew-summary-row span:last-child{text-align:right;}
 .soa-data-table th, .soa-data-table td{text-align:center;}
 .soa-data-table th.amt, .soa-data-table td.amt{text-align:right;}
+.bulk-import-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:8px;}
 .schedule-wrap{max-height:260px;overflow-y:auto;}
 .schedule-table td, .schedule-table th{padding:4px 8px;}
 .borrower-soa-wrap{max-width:640px;width:100%;margin:24px auto;padding:24px 28px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(20,20,20,.08);box-sizing:border-box;}

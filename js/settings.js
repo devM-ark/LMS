@@ -116,6 +116,54 @@ document.getElementById('deleteAllForm')?.addEventListener('submit', async (e)=>
   } finally { btn.disabled = false; }
 });
 
+/** Triggers a browser download of the exported CSV — used both as a data
+ *  backup and as the exact import template (headers always match). */
+async function downloadCsv(action, filenameBase){
+  const out = await postAction(action, {});
+  if(!out || !out.success) return;
+  const blob = new Blob([out.csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filenameBase}_${new Date().toISOString().slice(0,10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/** Reads the selected CSV file client-side and sends the raw text to the
+ *  backend for bulk import — headers just need to match the sheet's own
+ *  column names (case/whitespace tolerant), easiest guaranteed by using the
+ *  downloaded template above as the starting point. */
+function importCsv(fileInputId, action){
+  const fileInput = document.getElementById(fileInputId);
+  const msgId = action === 'importBorrowersCsv' ? 'importBorrowersMsg' : 'importPaymentsMsg';
+  const msgEl = document.getElementById(msgId);
+  const file = fileInput.files[0];
+  if(!file){ msgEl.textContent = 'Choose a CSV file first.'; msgEl.style.color = 'var(--bad)'; return; }
+
+  msgEl.textContent = 'Please wait while we import the file.';
+  msgEl.style.color = 'var(--muted)';
+
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const out = await postAction(action, {csvText: reader.result});
+    if(out && out.success){
+      msgEl.textContent = `Imported ${out.imported} row(s)` + (out.skipped ? `, skipped ${out.skipped} (missing or unrecognized Borrower ID).` : '.');
+      msgEl.style.color = 'var(--good)';
+      fileInput.value = '';
+      await loadData();
+      renderBorrowersTable();
+      renderPaymentsTable();
+    } else {
+      msgEl.textContent = '';
+    }
+  };
+  reader.onerror = () => { msgEl.textContent = 'Could not read the file.'; msgEl.style.color = 'var(--bad)'; };
+  reader.readAsText(file);
+}
+
 async function loadLogs(){
   const tbody = document.querySelector('#logsTable tbody');
   if(!tbody) return;

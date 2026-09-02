@@ -326,6 +326,32 @@
         <button class="btn gold" type="submit">Add Loan Type</button>
       </form>
 
+      <h2 class="section-title">Bulk Data Import</h2>
+      <div class="note">
+        For backfilling old loans and payments that predate this system. Download the current data first — it doubles as the exact template for your import file, so column names always line up.
+      </div>
+
+      <div class="bulk-import-grid">
+        <div>
+          <h4 style="margin:0 0 8px;color:var(--navy);">Borrowers</h4>
+          <button class="btn small ghost" style="width:100%;margin-bottom:10px;" onclick="downloadCsv('getMasterlistCsv','Masterlist')">Download Masterlist CSV</button>
+          <label style="display:block;font-family:Arial,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px;">Import Borrowers CSV
+            <input type="file" id="importBorrowersFile" accept=".csv" style="width:100%;font-family:Arial,sans-serif;padding:8px;border:1px solid var(--line);border-radius:4px;font-size:.82rem;background:#fff;">
+          </label>
+          <button class="btn gold" style="width:100%;margin-top:8px;" onclick="importCsv('importBorrowersFile','importBorrowersCsv')">Import Borrowers</button>
+          <div class="err" id="importBorrowersMsg" style="margin-top:6px;"></div>
+        </div>
+        <div>
+          <h4 style="margin:0 0 8px;color:var(--navy);">Payments</h4>
+          <button class="btn small ghost" style="width:100%;margin-bottom:10px;" onclick="downloadCsv('getPaymentsCsv','PaymentRecords')">Download Payment Records CSV</button>
+          <label style="display:block;font-family:Arial,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px;">Import Payments CSV
+            <input type="file" id="importPaymentsFile" accept=".csv" style="width:100%;font-family:Arial,sans-serif;padding:8px;border:1px solid var(--line);border-radius:4px;font-size:.82rem;background:#fff;">
+          </label>
+          <button class="btn gold" style="width:100%;margin-top:8px;" onclick="importCsv('importPaymentsFile','importPaymentsCsv')">Import Payments</button>
+          <div class="err" id="importPaymentsMsg" style="margin-top:6px;"></div>
+        </div>
+      </div>
+
       <h2 class="section-title" style="color:var(--bad);border-left-color:var(--bad);">Danger Zone</h2>
       <div class="note" style="background:#F5E3E1;color:var(--ink);">
         This permanently deletes every borrower and payment record. Loan types, staff accounts, and settings are kept.

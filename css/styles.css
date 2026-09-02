@@ -2,8 +2,8 @@
   --navy:#00638E; --navy-deep:#141414; --gold:#E5C690; --paper:#F4F7F9;
   --ink:#141414; --line:#E3EAEE; --good:#183630; --warn:#C97C2C; --bad:#A6403D; --muted:#5F7C8A;
   --tint:#BFD8E3;
-  --sidebar-gradient:linear-gradient(180deg,#00151F 0%,#004A6B 22%,#00638E 40%,#8CB9CC 50%,#00638E 60%,#004A6B 78%,#00151F 100%);
-  --header-gradient:linear-gradient(90deg,#00151F 0%,#004A6B 22%,#00638E 40%,#8CB9CC 50%,#00638E 60%,#004A6B 78%,#00151F 100%);
+  --sidebar-gradient:linear-gradient(180deg,#00151F 0%,#004A6B 25%,#00638E 50%,#004A6B 75%,#00151F 100%);
+  --header-gradient:linear-gradient(90deg,#00151F 0%,#004A6B 25%,#00638E 50%,#004A6B 75%,#00151F 100%);
 }
 *{box-sizing:border-box;}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:Arial,sans-serif;}
