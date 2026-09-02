@@ -53,6 +53,13 @@ tr:last-child td{border-bottom:none;}
 form.stack{display:flex;flex-direction:column;gap:14px;background:#fff;border-radius:8px;padding:18px;}
 form.stack label{display:block;font-family:Arial,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px;}
 form.stack input,form.stack select{width:100%;font-family:Arial,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:4px;font-size:.9rem;background:#fff;transition:border-color .15s,box-shadow .15s;}
+/* Native number-input spinner arrows render inconsistently across browsers/OS
+   (most noticeably on macOS), making those fields look narrower or oddly
+   shaped compared to plain text inputs even though the box width is
+   identical. Hiding them keeps every input the same visual size. */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+input[type=number]{-moz-appearance:textfield;}
 form.stack input:focus,form.stack select:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(0,99,142,.15);}
 form.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px 18px;}
 form.grid-2 label{margin-bottom:0;}
