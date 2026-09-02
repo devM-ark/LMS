@@ -40,6 +40,7 @@
   form.stack{padding:14px;gap:10px;}
   form.stack label{font-size:.66rem;margin-bottom:3px;}
   form.stack input,form.stack select{padding:9px 10px;font-size:.85rem;}
+  form.stack select,.stack-label select{padding-right:30px;}
 }
 
 @media(max-width:600px){ form.grid-2{grid-template-columns:1fr;} }
