@@ -43,7 +43,8 @@ document.addEventListener('keydown', (e)=>{
     if(typeof form.requestSubmit === 'function') form.requestSubmit();
     else form.dispatchEvent(new Event('submit', {cancelable:true}));
   }
-});
+}, true); // capture phase — on macOS Safari, a focused select/input can consume
+          // Escape internally (closing its own native popup) before it bubbles
 
 // Matches "Bonus Loan", "Year-End Bonus Loan", "Mid-Year Bonus Loan", or any
 // other Bonus Loan variant configured in Settings — loan type names come
