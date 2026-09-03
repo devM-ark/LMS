@@ -57,7 +57,7 @@ function renderBorrowersTable(){
       <td>${b['Loan Type']}</td>
       <td>${fmt(b.cutoffAmountDue)}</td>
       <td>${fmtDate(b.nextDue)}</td>
-      <td><span class="status-pill status-${(b.status||'').replace(/\s+/g,'-')}">${b.status}</span></td>
+      <td><span class="status-pill status-${((b.status==='Eligible for Renewal'?'Active':b.status)||'').replace(/\s+/g,'-')}">${b.status==='Eligible for Renewal'?'Active':b.status}</span></td>
       <td class="no-print"><button class="btn small ghost" onclick="showSOA(${b['Borrower ID']})">View</button></td>
       <td class="no-print admin-only" style="display:${isAdmin()?'':'none'}"><button class="btn small ghost" onclick="openEdit(${b['Borrower ID']})">Edit</button></td>
     </tr>`).join('') : `<tr><td colspan="8" class="empty">${q ? 'No borrowers match "'+q+'"' : 'No active borrowers'}</td></tr>`;

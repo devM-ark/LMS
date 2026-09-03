@@ -445,7 +445,13 @@
       </label>
       <label>Borrower Name (confirm)<input name="Borrower Name" id="paymentBorrowerName" readonly style="background:#EEF3F5;"></label>
       <label>Payment Date<input name="Payment Date" id="paymentDateInput" type="date" required></label>
-      <label>Amount Paid<input name="Amount Paid" id="paymentAmountInput" type="number" required></label>
+      <label id="paymentAmountLabel">Amount Paid<input name="Amount Paid" id="paymentAmountInput" type="number" required></label>
+      <div id="amortizedSplitWrap" style="grid-column:1/-1;display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <label>Per Cutoff Interest<input type="number" id="amortizedInterestInput"></label>
+          <label>Pay for the Principal Loan<input type="number" id="amortizedPrincipalInput" placeholder="0 (optional)"></label>
+        </div>
+      </div>
       <label>Mode of Payment
         <select name="Mode of Payment" id="paymentModeSelect"><option>ATM</option><option>Cash</option><option>Gcash</option><option>Bank Transfer</option></select>
       </label>

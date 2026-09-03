@@ -33,7 +33,16 @@ document.getElementById('paymentBorrowerResults')?.addEventListener('click', (e)
   document.getElementById('paymentBorrowerResults').classList.remove('show');
 
   const amtInput = document.getElementById('paymentAmountInput');
-  if(amtInput){
+  const isAmortized = b['Loan Type'] === 'Amortized Loan';
+  document.getElementById('paymentAmountLabel').style.display = isAmortized ? 'none' : '';
+  document.getElementById('amortizedSplitWrap').style.display = isAmortized ? '' : 'none';
+
+  if(isAmortized){
+    const interestDue = Math.round((Number(b['Loan Amount'])||0) * 0.025 * 100) / 100;
+    document.getElementById('amortizedInterestInput').value = interestDue || '';
+    document.getElementById('amortizedPrincipalInput').value = '';
+    syncAmortizedSplit();
+  } else if(amtInput){
     const hasFixedCutoff = b['Loan Type'] !== 'Add-on Diminishing' && !isBonusLoanType(b['Loan Type']) && Number(b['Amount/Cut-off']) > 0;
     if(hasFixedCutoff){
       amtInput.value = Number(b['Amount/Cut-off']); // pre-filled, still editable (partial/catch-up payments happen)
@@ -44,6 +53,22 @@ document.getElementById('paymentBorrowerResults')?.addEventListener('click', (e)
     }
   }
 });
+
+/** Amortized loans split "Amount Paid" into interest + principal in the UI
+ *  for clarity (the per-cutoff amount is pure interest — it never reduces
+ *  the balance on its own, only whatever's paid beyond it does, per
+ *  computeAmortized in LoanCalculationService.gs). The hidden Amount Paid
+ *  field is just their sum, so nothing else in the form/backend needs to
+ *  know this split UI exists — it submits as one ordinary payment. */
+function syncAmortizedSplit(){
+  const interest = Number(document.getElementById('amortizedInterestInput').value) || 0;
+  const principal = Number(document.getElementById('amortizedPrincipalInput').value) || 0;
+  const amtInput = document.getElementById('paymentAmountInput');
+  amtInput.value = interest + principal;
+  amtInput.dispatchEvent(new Event('input')); // keep the ATM change calculator in sync
+}
+document.getElementById('amortizedInterestInput').addEventListener('input', syncAmortizedSplit);
+document.getElementById('amortizedPrincipalInput').addEventListener('input', syncAmortizedSplit);
 
 document.addEventListener('click', (e)=>{
   if(e.target.id !== 'paymentBorrowerSearch' && !e.target.closest('#paymentBorrowerResults')){
@@ -152,6 +177,10 @@ function openAddPaymentModal(){
   document.getElementById('paymentMsg').textContent = '';
   document.getElementById('atmAmountReceivedInput').value = '';
   document.getElementById('atmChangeResult').textContent = '';
+  document.getElementById('amortizedInterestInput').value = '';
+  document.getElementById('amortizedPrincipalInput').value = '';
+  document.getElementById('paymentAmountLabel').style.display = '';
+  document.getElementById('amortizedSplitWrap').style.display = 'none';
   updateAtmChangeCalcVisibility();
   openModal('addPaymentModal');
 }
