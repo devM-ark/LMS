@@ -150,8 +150,41 @@ function openAddPaymentModal(){
   const rb = document.getElementById('paymentReceivedByInput');
   if(rb && SESSION && !rb.value) rb.value = SESSION.name;
   document.getElementById('paymentMsg').textContent = '';
+  document.getElementById('atmAmountReceivedInput').value = '';
+  document.getElementById('atmChangeResult').textContent = '';
+  updateAtmChangeCalcVisibility();
   openModal('addPaymentModal');
 }
+
+/** ATM Change Calculator — a pure cash-counting helper for staff, never
+ *  submitted with the payment. When a borrower's ATM deposit exceeds the
+ *  amount actually being applied to their loan (the "Amount Paid" field),
+ *  returning the excess as cash carries a fixed service charge: ₱10 per
+ *  every ₱500 (or part thereof) of change — e.g. ₱1–500 change costs ₱10,
+ *  ₱501–1000 costs ₱20, and so on. */
+function updateAtmChangeCalcVisibility(){
+  const isAtm = document.getElementById('paymentModeSelect').value === 'ATM';
+  document.getElementById('atmChangeCalcWrap').style.display = isAtm ? '' : 'none';
+  if(!isAtm){
+    document.getElementById('atmAmountReceivedInput').value = '';
+    document.getElementById('atmChangeResult').textContent = '';
+  }
+}
+
+function updateAtmChangeCalc(){
+  const resultEl = document.getElementById('atmChangeResult');
+  const received = Number(document.getElementById('atmAmountReceivedInput').value) || 0;
+  const paid = Number(document.getElementById('paymentAmountInput').value) || 0;
+  const excess = received - paid;
+  if(received <= 0 || excess <= 0){ resultEl.textContent = ''; return; }
+  const charge = Math.ceil(excess / 500) * 10;
+  const netChange = excess - charge;
+  resultEl.innerHTML = `Change to give back: <b>${fmt(netChange)}</b> <span style="color:var(--muted);">(₱${excess.toLocaleString()} excess − ₱${charge} ATM change charge)</span>`;
+}
+
+document.getElementById('paymentModeSelect').addEventListener('change', updateAtmChangeCalcVisibility);
+document.getElementById('atmAmountReceivedInput').addEventListener('input', updateAtmChangeCalc);
+document.getElementById('paymentAmountInput').addEventListener('input', updateAtmChangeCalc);
 
 let paymentsSearchQuery = '';
 let paymentsSort = { key: 'Payment Date', dir: -1 }; // default: newest first

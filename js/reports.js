@@ -117,7 +117,7 @@ function showNearlyDueModal(){
 
 function showPastDueModal(){
   const tbody = document.getElementById('pastDueModalBody');
-  const list = (STATE?.borrowers||[]).filter(b => b.status === 'Past Due');
+  const list = (STATE?.borrowers||[]).filter(b => b.status === 'Past Due' || b.status === 'Partially Paid');
   tbody.innerHTML = list.length ? list.map(b=>{
     const missed = (typeof b.missedCount === 'number' && b.missedCount > 0) ? b.missedCount : 1;
     return `<tr>

@@ -144,7 +144,7 @@ function render(){
     document.getElementById('dMonthUnpaidLabel').textContent = 'Total Unpaid for ' + STATE.monthLabel;
   }
   document.getElementById('dActive').textContent = borrowers.filter(b => (b.status !== 'Paid' && b.status !== 'Renewed')).length;
-  document.getElementById('dPastDue').textContent = counts['Past Due']||0;
+  document.getElementById('dPastDue').textContent = (counts['Past Due']||0) + (counts['Partially Paid']||0);
   document.getElementById('dNearlyDue').textContent = counts['Nearly Due']||0;
   document.getElementById('dEligibleRenewal').textContent = counts['Eligible for Renewal']||0;
 

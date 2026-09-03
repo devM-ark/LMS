@@ -151,6 +151,16 @@ function updateCutoffAuto(){
     cutoffInput.placeholder = 'N/A';
     return;
   }
+  if(type === 'Amortized Loan'){
+    // Fixed formula, not a configured tier: 2.5% of the loan amount per
+    // cutoff (5%/month), based on the ORIGINAL principal, forever.
+    cutoffInput.value = amt > 0 ? Math.round(amt * 0.025 * 100) / 100 : '';
+    const termInput = document.querySelector('#borrowerForm input[name="Term (Months)"]');
+    const match = (STATE?.loanTypes||[]).find(lt =>
+      lt.LoanType === type && Number(lt.AmountTier) === amt && (!lt.Group || lt.Group === group || lt.Group === 'Both'));
+    if(termInput && match && match.TermMonths) termInput.value = match.TermMonths;
+    return;
+  }
   const match = (STATE?.loanTypes||[]).find(lt =>
     lt.LoanType === type && Number(lt.AmountTier) === amt && (!lt.Group || lt.Group === group || lt.Group === 'Both'));
   if(match){
@@ -179,7 +189,7 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
     const out = await postAction('addBorrower', {data});
     if(out){
       showToast('Borrower added successfully.');
-      if(data['Loan Type'] === 'Add-on Diminishing'){
+      if(data['Loan Type'] === 'Add-on Diminishing' || data['Loan Type'] === 'Amortized Loan'){
         showAddOnDiminishingNotice(data);
       }
       e.target.reset();
@@ -193,11 +203,13 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
   } finally { btn.disabled = false; btn.textContent = originalLabel; }
 });
 
-/** Add-on Diminishing loans have one month's interest deducted upfront at
- *  release (matches the 5% compounding rate used in computeAddOnDiminishing
- *  on the backend — LoanCalculationService.gs — keep these in sync if that
- *  rate ever changes). This just reminds staff how much cash to actually
- *  hand over; it doesn't touch the stored Loan Amount or balance math. */
+/** Add-on Diminishing and Amortized loans both deduct one cutoff's worth of
+ *  interest upfront at release (5%, matching the compounding rate used in
+ *  computeAddOnDiminishing and the 2.5%-per-cutoff/5%-per-month rate used in
+ *  computeAmortized — both in LoanCalculationService.gs; keep these in sync
+ *  if either rate ever changes). This just reminds staff how much cash to
+ *  actually hand over; it doesn't touch the stored Loan Amount or balance
+ *  math. */
 function showAddOnDiminishingNotice(data){
   const amount = Number(data['Loan Amount']) || 0;
   const interest = Math.round(amount * 0.05);
@@ -266,7 +278,12 @@ function refreshEditLoanAmountField(b){
     }
     const match = (STATE?.loanTypes||[]).find(lt => lt.LoanType === type && Number(lt.AmountTier) === amt && (!lt.Group || lt.Group === group || lt.Group === 'Both'));
     form['Term (Months)'].value = match ? (match.TermMonths ?? '') : '';
-    form['Amount/Cut-off'].value = match ? (match.AmountPerCutoff ?? '') : '';
+    if(type === 'Amortized Loan'){
+      // Fixed formula, not a configured tier: 2.5% of the loan amount.
+      form['Amount/Cut-off'].value = amt > 0 ? Math.round(amt * 0.025 * 100) / 100 : '';
+    } else {
+      form['Amount/Cut-off'].value = match ? (match.AmountPerCutoff ?? '') : '';
+    }
   };
   const newField = document.getElementById('editLoanAmountInput');
   newField.addEventListener(newField.tagName === 'SELECT' ? 'change' : 'input', updateLockedFields);

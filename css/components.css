@@ -42,6 +42,7 @@ tr:last-child td{border-bottom:none;}
 .status-Nearly-Due{background:#F6E3CC;color:var(--warn);}
 .status-Due-Today{background:#F2D4AE;color:#9A5A1C;}
 .status-Past-Due{background:#F0DAD9;color:var(--bad);}
+.status-Partially-Paid{background:#F3E6CE;color:#8A5A18;}
 .status-Eligible-for-Renewal{background:#F3E6CE;color:#8A6318;}
 .status-Renewed{background:#E9E9E9;color:var(--ink);font-weight:800;}
 .status-PAID{background:#E9E9E9;color:var(--ink);font-weight:800;}
