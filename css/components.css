@@ -130,6 +130,10 @@ form.grid-2 .note{grid-column:1/-1;}
 .renew-summary-row:last-child{border-bottom:none;font-weight:700;color:var(--navy);}
 .renew-summary-row span:first-child{color:var(--muted);}
 .renew-summary-row span:last-child{text-align:right;}
+.group-payment-row{display:flex;justify-content:space-between;gap:16px;padding:4px 0;border-bottom:1px solid var(--line);}
+.group-payment-row:last-child{border-bottom:none;}
+.group-payment-row span:first-child{color:var(--muted);}
+.group-payment-row span:last-child{text-align:right;}
 .soa-data-table th, .soa-data-table td{text-align:center;}
 .soa-data-table th.amt, .soa-data-table td.amt{text-align:right;}
 .bulk-import-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:8px;}

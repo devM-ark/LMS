@@ -24,13 +24,22 @@ document.getElementById('paymentBorrowerSearch')?.addEventListener('input', (e)=
 document.getElementById('paymentBorrowerResults')?.addEventListener('click', (e)=>{
   const item = e.target.closest('.item[data-id]');
   if(!item) return;
-  const id = item.dataset.id;
+  selectPaymentBorrower(item.dataset.id);
+  document.getElementById('paymentBorrowerResults').classList.remove('show');
+});
+
+function selectPaymentBorrower(id){
   const b = (STATE?.borrowers||[]).find(x => String(x['Borrower ID']) === String(id));
   if(!b) return;
   document.getElementById('paymentBorrowerSelect').value = id;
   document.getElementById('paymentBorrowerSearch').value = `${id} — ${b['Last Name']}, ${b['First Name']}`;
   document.getElementById('paymentBorrowerName').value = `${b['Last Name']}, ${b['First Name']}`;
-  document.getElementById('paymentBorrowerResults').classList.remove('show');
+
+  // Default (not locked) Mode of Payment based on whether this borrower's
+  // ATM card is on file — staff can still change it to anything.
+  const modeSelect = document.getElementById('paymentModeSelect');
+  modeSelect.value = String(b['ATMOption']).trim().toLowerCase() === 'yes' ? 'ATM' : 'Cash';
+  updateAtmChangeCalcVisibility();
 
   const amtInput = document.getElementById('paymentAmountInput');
   const isAmortized = b['Loan Type'] === 'Amortized Loan';
@@ -63,7 +72,7 @@ document.getElementById('paymentBorrowerResults')?.addEventListener('click', (e)
       amtInput.placeholder = b['Loan Type'] === 'Add-on Diminishing' ? 'No fixed amount — enter payment' : 'Enter payment amount';
     }
   }
-});
+}
 
 /** Amortized loans split "Amount Paid" into interest + principal in the UI
  *  for clarity (the per-cutoff amount is pure interest — it never reduces
@@ -190,7 +199,7 @@ function updateGroupPaymentPreview(){
   });
 
   previewEl.innerHTML = rows.map(r =>
-    `<div class="renew-summary-row"><span>${r.name} (${r.loanType})</span><span>${fmt(r.amt)} / ${fmt(r.due)}${r.short ? ' <b style="color:var(--bad);">SHORT</b>' : ''}</span></div>`
+    `<div class="group-payment-row"><span>${r.name} (${r.loanType})</span><span>${fmt(r.amt)} / ${fmt(r.due)}${r.short ? ' <span style="color:var(--bad);font-weight:700;">SHORT</span>' : ''}</span></div>`
   ).join('');
 }
 document.getElementById('groupTotalAmountInput').addEventListener('input', updateGroupPaymentPreview);
@@ -266,7 +275,7 @@ async function voidPayment(rowId){
   finally { voidingInFlight = false; }
 }
 
-function openAddPaymentModal(){
+function openAddPaymentModal(preselectBorrowerId){
   document.getElementById('paymentBorrowerSearch').value = '';
   document.getElementById('paymentBorrowerSelect').value = '';
   document.getElementById('paymentBorrowerName').value = '';
@@ -288,6 +297,14 @@ function openAddPaymentModal(){
   document.getElementById('groupPaymentPreview').innerHTML = '';
   updateAtmChangeCalcVisibility();
   openModal('addPaymentModal');
+  if(preselectBorrowerId) selectPaymentBorrower(preselectBorrowerId);
+}
+
+/** Jumps from the Nearly Due / Past Due dashboard modals straight into
+ *  Record Payment for that borrower, without staff needing to re-search. */
+function payFromModal(borrowerId, sourceModalId){
+  closeModal(sourceModalId);
+  openAddPaymentModal(borrowerId);
 }
 
 /** ATM Change Calculator — a pure cash-counting helper for staff, never

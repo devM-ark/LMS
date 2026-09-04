@@ -447,6 +447,12 @@
       <label>Release Date<input name="Release Date" id="borrowerReleaseDateInput" type="date"></label>
       <label>Contact Number<input name="Contact Number"></label>
       <label>Address<input name="Address"></label>
+      <label>With ATM Card? (card surrendered)
+        <select name="ATMOption" id="borrowerAtmOptionSelect">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </label>
       <button class="btn gold" type="submit">Add Borrower</button>
       <div class="err" id="borrowerMsg"></div>
       <div class="note" id="cutoffHint" style="display:none;"></div>
@@ -475,7 +481,7 @@
       </div>
       <div id="groupPaymentWrap" style="grid-column:1/-1;display:none;background:var(--tint);border-radius:6px;padding:12px 14px;">
         <div style="font-weight:700;font-size:.78rem;color:var(--navy);margin-bottom:6px;">Group Loan Payment</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">This borrower is part of a household. One payment splits across every per-cutoff loan in the group — main borrower is covered first if the amount paid is short.</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">This borrower is part of a household. One payment splits across every per-cutoff loan in the group.</div>
         <label style="margin-bottom:0;">Total Amount Paid<input type="number" id="groupTotalAmountInput"></label>
         <div id="groupPaymentPreview" style="margin-top:10px;font-size:.85rem;"></div>
       </div>
@@ -520,10 +526,10 @@
     <div class="table-scroll">
       <table class="status-modal-table">
         <colgroup>
-          <col style="width:26%"><col style="width:20%"><col style="width:18%">
-          <col style="width:18%"><col style="width:18%">
+          <col style="width:22%"><col style="width:17%"><col style="width:15%">
+          <col style="width:15%"><col style="width:16%"><col style="width:15%">
         </colgroup>
-        <thead><tr><th>Name</th><th>Loan Type</th><th>Next Due</th><th>Due Amount</th><th>Days Before Due</th></tr></thead>
+        <thead><tr><th>Name</th><th>Loan Type</th><th>Next Due</th><th>Due Amount</th><th>Days Before Due</th><th class="no-print">Pay</th></tr></thead>
         <tbody id="nearlyDueModalBody"></tbody>
       </table>
     </div>
@@ -537,10 +543,10 @@
     <div class="table-scroll">
       <table class="status-modal-table">
         <colgroup>
-          <col style="width:26%"><col style="width:20%"><col style="width:18%">
-          <col style="width:18%"><col style="width:18%">
+          <col style="width:22%"><col style="width:17%"><col style="width:15%">
+          <col style="width:15%"><col style="width:16%"><col style="width:15%">
         </colgroup>
-        <thead><tr><th>Name</th><th>Loan Type</th><th>Due Date</th><th>Due Amount</th><th>Due Missed</th></tr></thead>
+        <thead><tr><th>Name</th><th>Loan Type</th><th>Due Date</th><th>Due Amount</th><th>Due Missed</th><th class="no-print">Pay</th></tr></thead>
         <tbody id="pastDueModalBody"></tbody>
       </table>
     </div>

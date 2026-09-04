@@ -110,8 +110,9 @@ function showNearlyDueModal(){
       <td>${fmtDate(b.nextDue)}</td>
       <td>${fmt(b.cutoffAmountDue)}</td>
       <td>${daysBefore}</td>
+      <td class="no-print"><button class="btn small gold" onclick="payFromModal(${b['Borrower ID']}, 'nearlyDueModal')">Pay</button></td>
     </tr>`;
-  }).join('') : `<tr><td colspan="5" class="empty">No borrowers nearly due</td></tr>`;
+  }).join('') : `<tr><td colspan="6" class="empty">No borrowers nearly due</td></tr>`;
   openModal('nearlyDueModal');
 }
 
@@ -126,8 +127,9 @@ function showPastDueModal(){
       <td>${fmtDate(b.nextDue)}</td>
       <td>${fmt(b.cutoffAmountDue)}</td>
       <td>${missed}</td>
+      <td class="no-print"><button class="btn small gold" onclick="payFromModal(${b['Borrower ID']}, 'pastDueModal')">Pay</button></td>
     </tr>`;
-  }).join('') : `<tr><td colspan="5" class="empty">No past due borrowers</td></tr>`;
+  }).join('') : `<tr><td colspan="6" class="empty">No past due borrowers</td></tr>`;
   openModal('pastDueModal');
 }
 
