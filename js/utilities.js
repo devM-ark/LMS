@@ -97,6 +97,7 @@ function buildSOAHTML(soa){
     <div class="soa-borrower-line">${b['Last Name']}, ${b['First Name']} &nbsp;•&nbsp; ID ${formatBorrowerId(b)}</div>
     <div class="soa-borrower-line">${b['Loan Type']} &nbsp;•&nbsp; Released ${fmtDate(b['Release Date'])}</div>
     ${Number(b['Renewal No.']) > 0 ? `<div class="soa-renewal-note">This is a renewed loan (Renewal #${Number(b['Renewal No.'])}), originally released to Borrower ID ${b['Original Borrower ID']}.</div>` : ''}
+    ${soa.coBorrowers && soa.coBorrowers.length ? `<div class="soa-renewal-note">This loan is part of a Group Loan. ${soa.coBorrowers.map(c=>`${c.lastName}, ${c.firstName} (${c.loanType}${c.isMain?' — Main Borrower':''})`).join('; ')}</div>` : ''}
     <h4>Account Summary</h4>
     <table class="soa-account-summary">
       <tr><td>Loan Amount</td><td>${fmt(b['Loan Amount'])}</td></tr>

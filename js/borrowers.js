@@ -1,4 +1,12 @@
 let masterlistSort = { key: null, dir: 1 };
+let expandedHouseholds = new Set();
+
+function toggleHouseholdExpand(householdId){
+  const key = String(householdId);
+  if(expandedHouseholds.has(key)) expandedHouseholds.delete(key);
+  else expandedHouseholds.add(key);
+  renderBorrowersTable();
+}
 
 function sortRows(rows, key, dir, kind){
   return [...rows].sort((a, b) => {
@@ -50,17 +58,65 @@ function renderBorrowersTable(){
     visibleBorrowers = sortRows(visibleBorrowers, masterlistSort.key, masterlistSort.dir, kind);
   }
   updateSortHeaderClasses('masterlist', masterlistSort.key, masterlistSort.dir);
-  mtbody.innerHTML = visibleBorrowers.length ? visibleBorrowers.map(b=>`
-    <tr>
+
+  const householdsSeen = new Set();
+  const rowsHtml = [];
+  visibleBorrowers.forEach(b => {
+    const householdId = b['Household ID'] || b['Borrower ID'];
+    const key = String(householdId);
+    if(householdsSeen.has(key)) return;
+    householdsSeen.add(key);
+    const members = visibleBorrowers.filter(x => String(x['Household ID'] || x['Borrower ID']) === key);
+
+    if(members.length === 1){
+      rowsHtml.push(renderBorrowerRow(members[0], false));
+      return;
+    }
+
+    const main = members.find(x => String(x['Borrower ID']) === key) || members[0];
+    const combinedDue = members
+      .filter(x => x['Loan Type']==='Regular Loan' || x['Loan Type']==='Amortized Loan')
+      .reduce((s,x) => s + (Number(x.cutoffAmountDue)||0), 0);
+    const priorityOrder = ['Past Due','Partially Paid','Due Today','Nearly Due','Eligible for Renewal','Active','Paid','Renewed'];
+    const worst = members.reduce((acc,x) => priorityOrder.indexOf(x.status) < priorityOrder.indexOf(acc) ? x.status : acc, members[0].status);
+    const earliestDue = members.filter(x => x.nextDue).map(x => x.nextDue).sort()[0];
+    const isExpanded = expandedHouseholds.has(key);
+
+    rowsHtml.push(`
+      <tr style="cursor:pointer;" onclick="toggleHouseholdExpand('${key}')">
+        <td>${formatBorrowerId(main)}</td>
+        <td>${main['Last Name']}, ${main['First Name']} <span style="font-size:.68rem;color:var(--muted);">(${isExpanded?'▾':'▸'} Group · ${members.length} loans)</span></td>
+        <td>Group Loan</td>
+        <td>${fmt(combinedDue)}</td>
+        <td>${fmtDate(earliestDue)}</td>
+        <td><span class="status-pill status-${((worst==='Eligible for Renewal'?'Active':worst)||'').replace(/\s+/g,'-')}">${worst==='Eligible for Renewal'?'Active':worst}</span></td>
+        <td class="no-print"><button class="btn small ghost" onclick="event.stopPropagation();showSOA(${main['Borrower ID']})">View</button></td>
+        <td class="no-print admin-only" style="display:${isAdmin()?'':'none'}"></td>
+      </tr>`);
+
+    if(isExpanded){
+      members.forEach(m => rowsHtml.push(renderBorrowerRow(m, true)));
+    }
+  });
+
+  mtbody.innerHTML = rowsHtml.length ? rowsHtml.join('') : `<tr><td colspan="8" class="empty">${q ? 'No borrowers match "'+q+'"' : 'No active borrowers'}</td></tr>`;
+}
+
+function renderBorrowerRow(b, indented){
+  const nameCell = indented
+    ? `<span style="padding-left:22px;color:var(--muted);">↳ ${b['Last Name']}, ${b['First Name']}</span>`
+    : `${b['Last Name']}, ${b['First Name']}`;
+  return `
+    <tr style="${indented ? 'background:#F7FAFB;' : ''}">
       <td>${formatBorrowerId(b)}</td>
-      <td>${b['Last Name']}, ${b['First Name']}</td>
+      <td>${nameCell}</td>
       <td>${b['Loan Type']}</td>
       <td>${fmt(b.cutoffAmountDue)}</td>
       <td>${fmtDate(b.nextDue)}</td>
       <td><span class="status-pill status-${((b.status==='Eligible for Renewal'?'Active':b.status)||'').replace(/\s+/g,'-')}">${b.status==='Eligible for Renewal'?'Active':b.status}</span></td>
       <td class="no-print"><button class="btn small ghost" onclick="showSOA(${b['Borrower ID']})">View</button></td>
       <td class="no-print admin-only" style="display:${isAdmin()?'':'none'}"><button class="btn small ghost" onclick="openEdit(${b['Borrower ID']})">Edit</button></td>
-    </tr>`).join('') : `<tr><td colspan="8" class="empty">${q ? 'No borrowers match "'+q+'"' : 'No active borrowers'}</td></tr>`;
+    </tr>`;
 }
 
 function computeNextBorrowerId(){
@@ -178,11 +234,16 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const btn = e.target.querySelector('button[type=submit]');
   if(btn.disabled) return;
+  const msgEl = document.getElementById('borrowerMsg');
+  if(document.getElementById('loanCategoryUISelect').value === 'Group-Co' && !document.getElementById('householdIdHidden').value){
+    msgEl.textContent = 'Search and select the main borrower for this group before saving.';
+    msgEl.style.color = 'var(--bad)';
+    return;
+  }
   btn.disabled = true;
   const originalLabel = btn.textContent;
   btn.textContent = 'Saving…';
   const data = Object.fromEntries(new FormData(e.target));
-  const msgEl = document.getElementById('borrowerMsg');
   msgEl.textContent = 'Please wait while we save the borrower.';
   msgEl.style.color = 'var(--muted)';
   try{
@@ -297,7 +358,63 @@ function openAddBorrowerModal(){
   setTodayDefault('borrowerReleaseDateInput');
   document.getElementById('borrowerMsg').textContent = '';
   document.getElementById('cutoffHint').style.display = 'none';
+  document.getElementById('loanCategoryUISelect').value = 'Individual';
+  document.getElementById('loanCategoryHidden').value = 'Individual';
+  document.getElementById('householdIdHidden').value = '';
+  document.getElementById('coBorrowerSearchWrap').style.display = 'none';
+  document.getElementById('coBorrowerSearchInput').value = '';
+  document.getElementById('coBorrowerSelectedInfo').textContent = '';
+  document.getElementById('coBorrowerSearchResults').classList.remove('show');
   openModal('addBorrowerModal');
+}
+
+document.getElementById('loanCategoryUISelect').addEventListener('change', (e)=>{
+  const val = e.target.value;
+  const searchWrap = document.getElementById('coBorrowerSearchWrap');
+  const categoryHidden = document.getElementById('loanCategoryHidden');
+  const householdHidden = document.getElementById('householdIdHidden');
+  if(val === 'Individual'){
+    categoryHidden.value = 'Individual';
+    householdHidden.value = '';
+    searchWrap.style.display = 'none';
+  } else if(val === 'Group-Main'){
+    categoryHidden.value = 'Group';
+    householdHidden.value = document.getElementById('borrowerIdField').value; // main borrower = own ID
+    searchWrap.style.display = 'none';
+  } else { // Group-Co
+    categoryHidden.value = 'Group';
+    householdHidden.value = ''; // set once a main borrower is picked below
+    searchWrap.style.display = '';
+  }
+});
+
+document.getElementById('coBorrowerSearchInput').addEventListener('input', (e)=>{
+  const q = e.target.value.trim().toLowerCase();
+  document.getElementById('householdIdHidden').value = '';
+  document.getElementById('coBorrowerSelectedInfo').textContent = '';
+  const resultsEl = document.getElementById('coBorrowerSearchResults');
+  if(!q){ resultsEl.classList.remove('show'); return; }
+  // Only existing MAIN borrowers can be picked as the household anchor —
+  // i.e. their own Borrower ID already equals their own Household ID (a
+  // plain Individual loan) or they're already the anchor of a Group loan.
+  const matches = (STATE?.borrowers||[]).filter(b => {
+    const isMain = !b['Household ID'] || String(b['Household ID']) === String(b['Borrower ID']);
+    if(!isMain) return false;
+    const idStr = String(b['Borrower ID']||'').toLowerCase();
+    const nameStr = `${b['Last Name']||''} ${b['First Name']||''}`.toLowerCase();
+    return idStr.includes(q) || nameStr.includes(q);
+  }).slice(0, 8);
+  resultsEl.innerHTML = matches.length
+    ? matches.map(b => `<div class="item" onclick="selectCoBorrowerHousehold(${b['Borrower ID']}, '${(b['Last Name']+', '+b['First Name']).replace(/'/g,"\\'")}')">${b['Last Name']}, ${b['First Name']} — ID ${b['Borrower ID']}</div>`).join('')
+    : `<div class="item" style="color:var(--muted);cursor:default;">No matching borrower found</div>`;
+  resultsEl.classList.add('show');
+});
+
+function selectCoBorrowerHousehold(borrowerId, name){
+  document.getElementById('householdIdHidden').value = borrowerId;
+  document.getElementById('coBorrowerSearchInput').value = name;
+  document.getElementById('coBorrowerSelectedInfo').textContent = `Will be added under ${name}'s household.`;
+  document.getElementById('coBorrowerSearchResults').classList.remove('show');
 }
 
 async function showSOA(id){

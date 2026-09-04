@@ -70,6 +70,11 @@
       <button id="borrowerLogoutBtn" onclick="borrowerLogout()">Sign out</button>
     </div>
   </header>
+  <div id="householdPickerWrap" style="max-width:640px;margin:16px auto 0;display:none;">
+    <label class="stack-label" style="display:block;font-family:Arial,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px;">Viewing Statement For
+      <select id="householdPickerSelect"></select>
+    </label>
+  </div>
   <div class="borrower-soa-wrap" id="borrowerSOAContent"></div>
 </div>
 
@@ -169,7 +174,7 @@
       <div class="reports-grid">
         <div class="reports-col-header">Summary of Borrowers</div>
         <div class="reports-col-header">Summary of Collections</div>
-        <label class="stack-label rf-group">Group
+        <label class="stack-label rf-group">Cutoff Schedule
           <select name="Group" form="reportFilterForm" id="reportGroupSelect">
             <option value="Teachers">Teachers</option>
             <option value="Tiaong">Tiaong</option>
@@ -311,14 +316,14 @@
       <h2 class="section-title">Loan Types &amp; Rates</h2>
       <div class="table-scroll">
         <table id="loanTypesTable">
-          <thead><tr><th>Key</th><th>Type</th><th>Group</th><th>Amount/Tier</th><th>Add-On Rate</th><th>Term</th><th class="no-print">Edit</th><th class="no-print">Delete</th></tr></thead>
+          <thead><tr><th>Key</th><th>Type</th><th>Cutoff Schedule</th><th>Amount/Tier</th><th>Add-On Rate</th><th>Term</th><th class="no-print">Edit</th><th class="no-print">Delete</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
       <form class="stack" id="loanTypeForm">
         <label>Loan Type Key (unique)<input name="LoanTypeKey" required></label>
         <label>Loan Type Name<input name="LoanType" required></label>
-        <label>Group<select name="Group">
+        <label>Cutoff Schedule<select name="Group">
           <option value="Both">All Groups</option>
           <option value="Teachers">Teachers only</option>
           <option value="Tiaong">Tiaong only</option>
@@ -403,9 +408,25 @@
     <h3>Add Borrower</h3>
     <form class="stack grid-2" id="borrowerForm">
       <label style="grid-column:1/-1;">Borrower ID (auto-generated)<input name="Borrower ID" id="borrowerIdField" readonly style="background:#EEF3F5;"></label>
+      <label style="grid-column:1/-1;">Loan Category
+        <select id="loanCategoryUISelect">
+          <option value="Individual">Individual</option>
+          <option value="Group-Main">Group Loan — Start New Group (I am the Main Borrower)</option>
+          <option value="Group-Co">Group Loan — Add as Co-Borrower to an Existing Group</option>
+        </select>
+      </label>
+      <div id="coBorrowerSearchWrap" style="grid-column:1/-1;display:none;position:relative;">
+        <label>Search Main Borrower
+          <input type="text" id="coBorrowerSearchInput" placeholder="Type name or ID…" autocomplete="off">
+        </label>
+        <div id="coBorrowerSearchResults" class="autocomplete-results"></div>
+        <div id="coBorrowerSelectedInfo" style="font-size:.8rem;color:var(--navy);margin-top:2px;font-weight:600;"></div>
+      </div>
+      <input type="hidden" name="Loan Category" id="loanCategoryHidden" value="Individual">
+      <input type="hidden" name="Household ID" id="householdIdHidden">
       <label>Last Name<input name="Last Name" required></label>
       <label>First Name<input name="First Name" required></label>
-      <label>Group (Cutoff Schedule)
+      <label>Cutoff Schedule
         <select name="Group" id="borrowerGroupSelect">
           <option value="Teachers">Teachers - Cutoff 15/30</option>
           <option value="Tiaong">Tiaong - Cutoff 5/20</option>
@@ -452,13 +473,19 @@
           <label>Pay for the Principal Loan<input type="number" id="amortizedPrincipalInput" placeholder="0 (optional)"></label>
         </div>
       </div>
+      <div id="groupPaymentWrap" style="grid-column:1/-1;display:none;background:var(--tint);border-radius:6px;padding:12px 14px;">
+        <div style="font-weight:700;font-size:.78rem;color:var(--navy);margin-bottom:6px;">Group Loan Payment</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;">This borrower is part of a household. One payment splits across every per-cutoff loan in the group — main borrower is covered first if the amount paid is short.</div>
+        <label style="margin-bottom:0;">Total Amount Paid<input type="number" id="groupTotalAmountInput"></label>
+        <div id="groupPaymentPreview" style="margin-top:10px;font-size:.85rem;"></div>
+      </div>
       <label>Mode of Payment
         <select name="Mode of Payment" id="paymentModeSelect"><option>ATM</option><option>Cash</option><option>Gcash</option><option>Bank Transfer</option></select>
       </label>
       <div id="atmChangeCalcWrap" style="grid-column:1/-1;display:none;background:var(--tint);border-radius:6px;padding:12px 14px;">
-        <div style="font-weight:700;font-size:.78rem;color:var(--navy);margin-bottom:8px;">ATM Change Calculator <span style="font-weight:400;color:var(--muted);">— helper only, not saved with the payment</span></div>
+        <div style="font-weight:700;font-size:.78rem;color:var(--navy);margin-bottom:8px;">ATM Change Calculator</div>
         <label style="margin-bottom:0;">Amount Received via ATM
-          <input type="number" id="atmAmountReceivedInput" placeholder="e.g. 4000">
+          <input type="number" id="atmAmountReceivedInput">
         </label>
         <div id="atmChangeResult" style="margin-top:8px;font-size:.85rem;color:var(--ink);"></div>
       </div>

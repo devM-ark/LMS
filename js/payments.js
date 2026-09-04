@@ -34,8 +34,19 @@ document.getElementById('paymentBorrowerResults')?.addEventListener('click', (e)
 
   const amtInput = document.getElementById('paymentAmountInput');
   const isAmortized = b['Loan Type'] === 'Amortized Loan';
-  document.getElementById('paymentAmountLabel').style.display = isAmortized ? 'none' : '';
-  document.getElementById('amortizedSplitWrap').style.display = isAmortized ? '' : 'none';
+  const household = (STATE?.borrowers||[]).filter(x => String(x['Household ID'] || x['Borrower ID']) === String(b['Household ID'] || b['Borrower ID']));
+  const isGroup = household.length > 1;
+
+  document.getElementById('paymentAmountLabel').style.display = (isAmortized || isGroup) ? 'none' : '';
+  document.getElementById('amortizedSplitWrap').style.display = (isAmortized && !isGroup) ? '' : 'none';
+  document.getElementById('groupPaymentWrap').style.display = isGroup ? '' : 'none';
+
+  if(isGroup){
+    document.getElementById('groupTotalAmountInput').value = '';
+    document.getElementById('groupPaymentPreview').innerHTML = '';
+    updateGroupPaymentPreview();
+    return;
+  }
 
   if(isAmortized){
     const interestDue = Math.round((Number(b['Loan Amount'])||0) * 0.025 * 100) / 100;
@@ -130,6 +141,9 @@ document.getElementById('paymentForm').addEventListener('submit', async (e)=>{
     document.getElementById('paymentMsg').style.color = 'var(--bad)';
     return;
   }
+  if(document.getElementById('groupPaymentWrap').style.display !== 'none'){
+    return submitGroupPayment(btn);
+  }
   btn.disabled = true;
   const originalLabel = btn.textContent;
   btn.textContent = 'Saving…';
@@ -153,6 +167,94 @@ document.getElementById('paymentForm').addEventListener('submit', async (e)=>{
     }
   } finally { btn.disabled = false; btn.textContent = originalLabel; }
 });
+
+/** Live preview of how a group payment would be allocated — main borrower
+ *  covered first, matches the same priority rule addGroupPayment applies
+ *  server-side, so staff see exactly what will happen before submitting. */
+function updateGroupPaymentPreview(){
+  const previewEl = document.getElementById('groupPaymentPreview');
+  const id = document.getElementById('paymentBorrowerSelect').value;
+  const b = (STATE?.borrowers||[]).find(x => String(x['Borrower ID']) === String(id));
+  if(!b){ previewEl.innerHTML = ''; return; }
+  const householdId = b['Household ID'] || b['Borrower ID'];
+  const members = (STATE?.borrowers||[]).filter(x => String(x['Household ID'] || x['Borrower ID']) === String(householdId));
+  const splitLoans = members.filter(x => x['Loan Type']==='Regular Loan' || x['Loan Type']==='Amortized Loan')
+    .sort((x,y) => (String(x['Borrower ID'])===String(householdId)?0:1) - (String(y['Borrower ID'])===String(householdId)?0:1));
+
+  let remaining = Number(document.getElementById('groupTotalAmountInput').value) || 0;
+  const rows = splitLoans.map(m => {
+    const due = Number(m['Amount/Cut-off']) || 0;
+    const amt = Math.max(0, Math.min(due, remaining));
+    remaining = Math.round((remaining - amt) * 100) / 100;
+    return { name: `${m['Last Name']}, ${m['First Name']}`, loanType: m['Loan Type'], due, amt, short: amt < due };
+  });
+
+  previewEl.innerHTML = rows.map(r =>
+    `<div class="renew-summary-row"><span>${r.name} (${r.loanType})</span><span>${fmt(r.amt)} / ${fmt(r.due)}${r.short ? ' <b style="color:var(--bad);">SHORT</b>' : ''}</span></div>`
+  ).join('');
+}
+document.getElementById('groupTotalAmountInput').addEventListener('input', updateGroupPaymentPreview);
+
+async function submitGroupPayment(btn){
+  const msgEl = document.getElementById('paymentMsg');
+  const id = document.getElementById('paymentBorrowerSelect').value;
+  const b = (STATE?.borrowers||[]).find(x => String(x['Borrower ID']) === String(id));
+  const householdId = b['Household ID'] || b['Borrower ID'];
+  const totalAmount = Number(document.getElementById('groupTotalAmountInput').value) || 0;
+  if(totalAmount <= 0){ msgEl.textContent = 'Enter the total amount paid.'; msgEl.style.color = 'var(--bad)'; return; }
+
+  btn.disabled = true;
+  const originalLabel = btn.textContent;
+  btn.textContent = 'Saving…';
+  msgEl.textContent = 'Please wait while we record the group payment.';
+  msgEl.style.color = 'var(--muted)';
+  try{
+    const out = await postAction('addGroupPayment', {
+      householdId,
+      totalAmount,
+      paymentDate: document.getElementById('paymentDateInput').value,
+      mode: document.getElementById('paymentModeSelect').value,
+      receivedBy: document.getElementById('paymentReceivedByInput').value
+    });
+    if(out && out.success){
+      showToast(out.shortfall ? 'Payment recorded — some loans were short.' : 'Payment recorded successfully.');
+      document.getElementById('paymentForm').reset();
+      document.getElementById('paymentBorrowerName').value = '';
+      document.getElementById('groupPaymentWrap').style.display = 'none';
+      document.getElementById('paymentAmountLabel').style.display = '';
+      setTodayDefault('paymentDateInput');
+      document.getElementById('paymentReceivedByInput').value = SESSION.name;
+      await loadData();
+      closeModal('addPaymentModal');
+      showGroupReceipt(out);
+    } else {
+      msgEl.textContent = '';
+    }
+  } finally { btn.disabled = false; btn.textContent = originalLabel; }
+}
+
+function showGroupReceipt(out){
+  const companyName = (STATE?.settings && STATE.settings.CompanyName) || "Manalo's Lending Corporation Inc.";
+  const rows = out.allocations.filter(a => a.amount > 0).map(a => `
+    <tr><td style="padding:4px 0;">${a.name} <span style="color:var(--muted);">(${a.loanType})</span></td><td style="padding:4px 0;text-align:right;">${fmt(a.amount)}</td></tr>
+  `).join('');
+  const total = out.allocations.reduce((s,a) => s + a.amount, 0);
+  document.getElementById('receiptContent').innerHTML = `
+    <div style="text-align:center;border-bottom:2px solid var(--gold);padding-bottom:8px;margin-bottom:10px;">
+      <div style="font-family:Arial,sans-serif;font-weight:bold;font-size:.95rem;color:var(--navy);">${companyName}</div>
+      <div style="font-family:Arial,sans-serif;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;">Official Receipt — Group Loan Payment</div>
+    </div>
+    <table style="width:100%;font-family:Arial,sans-serif;font-size:.72rem;border-collapse:collapse;">
+      <tr><td style="padding:3px 0;color:var(--muted);">OR No.</td><td style="padding:3px 0;text-align:right;font-weight:700;">${out.orNumber}</td></tr>
+      <tr><td colspan="2" style="border-top:1px solid var(--line);padding-top:8px;font-weight:700;color:var(--navy);">Payment for:</td></tr>
+      ${rows}
+      <tr><td style="padding-top:6px;border-top:1px solid var(--line);font-weight:700;">Total</td><td style="padding-top:6px;border-top:1px solid var(--line);text-align:right;font-weight:700;">${fmt(total)}</td></tr>
+    </table>
+    ${out.shortfall ? `<div style="margin-top:10px;font-size:.72rem;color:var(--bad);">Note: the amount paid was short — one or more loans above did not receive their full amount due this cutoff.</div>` : ''}
+    <div style="text-align:center;font-size:.6rem;color:var(--muted);margin-top:10px;font-style:italic;">This receipt is system generated.</div>
+  `;
+  openModal('receiptModal');
+}
 
 let voidingInFlight = false;
 async function voidPayment(rowId){
@@ -181,6 +283,9 @@ function openAddPaymentModal(){
   document.getElementById('amortizedPrincipalInput').value = '';
   document.getElementById('paymentAmountLabel').style.display = '';
   document.getElementById('amortizedSplitWrap').style.display = 'none';
+  document.getElementById('groupPaymentWrap').style.display = 'none';
+  document.getElementById('groupTotalAmountInput').value = '';
+  document.getElementById('groupPaymentPreview').innerHTML = '';
   updateAtmChangeCalcVisibility();
   openModal('addPaymentModal');
 }
