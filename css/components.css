@@ -65,10 +65,7 @@ form.stack select,.stack-label select{
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235F7C8A'><path d='M7 10l5 5 5-5z'/></svg>");
   background-repeat:no-repeat;background-position:right 10px center;background-size:18px;
 }
-/* Native number-input spinner arrows render inconsistently across browsers/OS
-   (most noticeably on macOS), making those fields look narrower or oddly
-   shaped compared to plain text inputs even though the box width is
-   identical. Hiding them keeps every input the same visual size. */
+
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 input[type=number]{-moz-appearance:textfield;}
@@ -140,6 +137,7 @@ form.grid-2 .note{grid-column:1/-1;}
 .schedule-wrap{max-height:260px;overflow-y:auto;}
 .schedule-table td, .schedule-table th{padding:4px 8px;}
 .borrower-soa-wrap{max-width:640px;width:100%;margin:24px auto;padding:24px 28px;background:#fff;border-radius:10px;box-shadow:0 4px 20px rgba(20,20,20,.08);box-sizing:border-box;}
+.household-picker-wrap{width:100%;max-width:640px;padding:0 28px;box-sizing:border-box;}
 
 /* Borrower/Viewer self-service portal header */
 header.top.borrower-header{align-items:center;}

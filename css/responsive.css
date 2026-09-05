@@ -2,6 +2,7 @@
 
 @media (max-width:720px){
   .borrower-soa-wrap{margin:16px auto;padding:16px;max-width:100%;font-size:.8rem;}
+  .household-picker-wrap{padding:0 16px;max-width:100%;}
   header.top.borrower-header{flex-wrap:wrap;gap:8px;}
   header.top.borrower-header h1{font-size:.85rem;}
   header.top.borrower-header .whoami{font-size:.68rem;}
@@ -100,10 +101,7 @@
   @page{ margin:12mm; }
 }
 
-/* Placed last on purpose: equal-specificity CSS rules are decided by source
-   order, not by which @media block they're in, so this must come after the
-   base .report-table rule (in components.css) and the @media print block
-   above to actually win on mobile screens. */
+/* Placed last on purpose*/
 @media (max-width:720px){
   .report-table{ table-layout:auto; width:max-content; min-width:100%; }
   .report-table col{ width:auto !important; }

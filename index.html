@@ -70,8 +70,8 @@
       <button id="borrowerLogoutBtn" onclick="borrowerLogout()">Sign out</button>
     </div>
   </header>
-  <div id="householdPickerWrap" style="max-width:640px;margin:16px auto 0;display:none;">
-    <label class="stack-label" style="display:block;font-family:Arial,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px;">Viewing Statement For
+  <div id="householdPickerWrap" class="household-picker-wrap" style="margin:16px auto 0;display:none;">
+    <label class="stack-label" style="display:block;font-family:Arial,sans-serif;font-size:.72rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px;">Viewing Statement of Account for:
       <select id="householdPickerSelect"></select>
     </label>
   </div>
@@ -411,8 +411,8 @@
       <label style="grid-column:1/-1;">Loan Category
         <select id="loanCategoryUISelect">
           <option value="Individual">Individual</option>
-          <option value="Group-Main">Group Loan — Start New Group (I am the Main Borrower)</option>
-          <option value="Group-Co">Group Loan — Add as Co-Borrower to an Existing Group</option>
+          <option value="Group-Main">Group Loan (Main Borrower)</option>
+          <option value="Group-Co">Group Loan (Co-Borrower)</option>
         </select>
       </label>
       <div id="coBorrowerSearchWrap" style="grid-column:1/-1;display:none;position:relative;">

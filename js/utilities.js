@@ -101,10 +101,10 @@ function buildSOAHTML(soa){
     <h4>Account Summary</h4>
     <table class="soa-account-summary">
       <tr><td>Loan Amount</td><td>${fmt(b['Loan Amount'])}</td></tr>
-      <tr><td>Total Paid</td><td>${fmt(c.totalPaid)}</td></tr>
-      <tr><td>Outstanding Balance (full loan)</td><td>${fmt(c.balance)}</td></tr>
-      <tr><td>Amount Due This Cutoff</td><td>${fmt(c.cutoffAmountDue)}</td></tr>
+      <tr><td>Outstanding Balance</td><td>${fmt(c.balance)}</td></tr>
+      <tr><td>${b['Loan Type']==='Amortized Loan' ? 'Total Interest Paid' : 'Total Amount Paid'}</td><td>${fmt(b['Loan Type']==='Amortized Loan' ? c.totalInterestPaid : c.totalPaid)}</td></tr>
       <tr><td>${b['Loan Type']==='Add-on Diminishing' ? 'Next Due / Renewal' : (isBonusLoanType(b['Loan Type']) ? 'Maturity Date' : 'Next Due Date')}</td><td>${fmtDate(c.nextDue)}</td></tr>
+      <tr><td>Amount Due This Cutoff</td><td>${fmt(c.cutoffAmountDue)}</td></tr>
       <tr><td>Status</td><td class="soa-status-value">${c.status}</td></tr>
     </table>
     <h4>Payment History</h4>
