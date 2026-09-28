@@ -1,3 +1,18 @@
+/**
+ * app.js — core application state (STATE/SESSION), the dashboard
+ * render() aggregate, login/logout/account handlers, and bootstrapping.
+ *
+ * LOAD ORDER MATTERS: this file must load LAST (after utilities.js,
+ * api.js, navigation.js, borrowers.js, payments.js, reports.js,
+ * settings.js). The session-restore check at the bottom of this file
+ * calls enterApp() -> loadData() -> render(), which in turn calls
+ * functions defined in several of the other files (e.g.
+ * renderBorrowersTable() in borrowers.js). Those files must already be
+ * loaded and have defined their functions as globals before this
+ * bootstrap runs — exactly mirroring their order of appearance in the
+ * original single-file index.html.
+ */
+
 let STATE = null;
 let borrowerSearchQuery = '';
 let SESSION = null; // {username, role, name}
@@ -92,6 +107,15 @@ function enterApp(){
   toggleHomeOnlyActions(true); // Home is the default active tab
   loadData();
   setInterval(loadData, 30000);
+  // Browsers throttle/pause timers in a background or inactive tab, so the
+  // 30s auto-refresh above can fall behind if staff leave this tab open
+  // while working elsewhere (e.g. recording a payment in a different tab).
+  // Refresh immediately whenever this tab becomes visible again, so a
+  // payment just recorded elsewhere shows up right away instead of only
+  // catching up on the next timer tick.
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState === 'visible') loadData();
+  });
 }
 
 // restore session on reload (same tab only)

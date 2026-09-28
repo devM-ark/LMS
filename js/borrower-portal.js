@@ -1,3 +1,14 @@
+/**
+ * borrower-portal.js — the Borrower/Viewer role.
+ * A borrower logs in with their own account (see BorrowerAuth.gs) and only
+ * ever sees their own Statement of Account. This is intentionally kept
+ * separate from SESSION/app.js's staff session — a borrower never becomes a
+ * SESSION and never touches any staff-only tab or action.
+ *
+ * Loads before app.js (see index.html script order) but after utilities.js,
+ * api.js, and borrowers.js — needs postAction() and buildSOAHTML().
+ */
+
 let BORROWER_SESSION = null; // {username, borrowerId, firstName, lastName, mustChangePassword}
 
 function setLoginMode(mode){
@@ -111,10 +122,13 @@ async function enterBorrowerPortal(){
   const pickerSelect = document.getElementById('householdPickerSelect');
   const household = BORROWER_SESSION.household || [];
   if(household.length > 1){
+    // A Bonus Loan can share the exact same Borrower ID as another loan in
+    // this list, so the option value must carry Loan Type too, not just ID.
     pickerSelect.innerHTML = household.map(m =>
-      `<option value="${m.borrowerId}">${m.lastName}, ${m.firstName} — ${m.loanType}${m.isMain ? ' (You)' : ''}</option>`
+      `<option value="${m.borrowerId}::${m.loanType}">${m.lastName}, ${m.firstName} — ${m.loanType}${m.isMain ? ' (You)' : ''}</option>`
     ).join('');
-    pickerSelect.value = BORROWER_SESSION.borrowerId;
+    const defaultEntry = household.find(m => String(m.borrowerId) === String(BORROWER_SESSION.borrowerId)) || household[0];
+    pickerSelect.value = `${defaultEntry.borrowerId}::${defaultEntry.loanType}`;
     pickerWrap.style.display = '';
   } else {
     pickerWrap.style.display = 'none';
@@ -123,17 +137,18 @@ async function enterBorrowerPortal(){
   await loadBorrowerSOA(BORROWER_SESSION.borrowerId);
 }
 
-async function loadBorrowerSOA(targetBorrowerId){
+async function loadBorrowerSOA(targetBorrowerId, targetLoanType){
   const contentEl = document.getElementById('borrowerSOAContent');
   contentEl.innerHTML = '<div class="empty">Please wait while we prepare your Statement of Account.</div>';
-  const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({action:'getMySOA', username: BORROWER_SESSION.username, targetBorrowerId})});
+  const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({action:'getMySOA', username: BORROWER_SESSION.username, targetBorrowerId, targetLoanType})});
   const soa = await res.json();
   if(soa.error){ contentEl.innerHTML = `<div class="err">${soa.error}</div>`; return; }
   contentEl.innerHTML = buildSOAHTML(soa);
 }
 
 document.getElementById('householdPickerSelect').addEventListener('change', (e)=>{
-  loadBorrowerSOA(e.target.value);
+  const [id, loanType] = e.target.value.split('::');
+  loadBorrowerSOA(id, loanType);
 });
 
 function borrowerLogout(){

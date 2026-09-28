@@ -1,3 +1,9 @@
+/**
+ * components.css — reusable UI pieces used inside the page shell:
+ * dashboard cards, data tables, status pills, forms, buttons,
+ * the borrower search autocomplete, and SOA/report tables.
+ */
+
 .cards{display:grid;grid-template-columns:repeat(12,1fr);gap:8px;margin-bottom:18px;}
 .cards .card:nth-child(-n+6){grid-column:span 4;}
 .cards .card:nth-child(n+7){grid-column:span 3;}
@@ -65,7 +71,10 @@ form.stack select,.stack-label select{
   background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%235F7C8A'><path d='M7 10l5 5 5-5z'/></svg>");
   background-repeat:no-repeat;background-position:right 10px center;background-size:18px;
 }
-
+/* Native number-input spinner arrows render inconsistently across browsers/OS
+   (most noticeably on macOS), making those fields look narrower or oddly
+   shaped compared to plain text inputs even though the box width is
+   identical. Hiding them keeps every input the same visual size. */
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 input[type=number]{-moz-appearance:textfield;}

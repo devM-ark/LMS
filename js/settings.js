@@ -1,3 +1,9 @@
+/**
+ * settings.js — Users & Roles, Company Settings, Due Date Email
+ * Reminders, the Loan Types & Rates catalog, the danger-zone data wipe,
+ * and Activity Logs.
+ */
+
 function openStaffModal(){
   document.getElementById('staffForm').reset();
   document.getElementById('staffErr').textContent = '';

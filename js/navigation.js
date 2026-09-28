@@ -1,3 +1,7 @@
+/**
+ * navigation.js — sidebar tab switching.
+ */
+
 document.querySelectorAll('nav.tabbar button[data-tab]').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('nav.tabbar button[data-tab]').forEach(b=>b.classList.remove('active'));

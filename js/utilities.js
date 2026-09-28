@@ -1,3 +1,10 @@
+/**
+ * utilities.js — small, generic helpers with no feature-specific
+ * dependencies: formatting, modal open/close, password-field toggling,
+ * the Enter/Escape modal keyboard shortcuts, toasts, and date defaults.
+ * Loaded first (after nothing) — everything else depends on this file.
+ */
+
 function fmt(n){ return n===null||n===undefined ? '—' : '₱' + (Number(n)||0).toLocaleString(undefined,{maximumFractionDigits:0}); }
 function fmtDate(s){
   if(!s) return '—';
@@ -51,6 +58,20 @@ document.addEventListener('keydown', (e)=>{
 // from whatever's in the LoanTypes sheet, so this can't be a strict match.
 function isBonusLoanType(loanType){
   return typeof loanType === 'string' && loanType.indexOf('Bonus Loan') !== -1;
+}
+
+/** Finds one specific loan row in STATE.borrowers — a Bonus Loan can share
+ *  the exact same Borrower ID as that borrower's other (Regular/Amortized/
+ *  Add-on) loan, so any lookup that needs to act on ONE loan must match on
+ *  Loan Type too, not just Borrower ID. When loanType is omitted, falls back
+ *  to the first matching row (used for legacy payments/links recorded
+ *  before this feature existed, which have no Loan Type to match against —
+ *  harmless for the vast majority of borrowers who only ever have one loan
+ *  row per ID). */
+function findLoanRow(id, loanType){
+  const rows = (STATE?.borrowers||[]).filter(x => String(x['Borrower ID']) === String(id));
+  if(loanType) return rows.find(x => x['Loan Type'] === loanType) || rows[0];
+  return rows[0];
 }
 
 function setTodayDefault(inputId){

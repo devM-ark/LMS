@@ -1,3 +1,10 @@
+/**
+ * styles.css — design tokens, resets, and small generic/utility classes
+ * used across the whole app (toast, section titles, empty/error states).
+ * Load order matters for the whole css/ folder: styles -> layout ->
+ * components -> responsive (responsive must load last).
+ */
+
 :root{
   --navy:#00638E; --navy-deep:#141414; --gold:#E5C690; --paper:#F4F7F9;
   --ink:#141414; --line:#E3EAEE; --good:#183630; --warn:#C97C2C; --bad:#A6403D; --muted:#5F7C8A;

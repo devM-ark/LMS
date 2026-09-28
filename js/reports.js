@@ -1,3 +1,9 @@
+/**
+ * reports.js — Reports tab: Summary of Borrowers and Summary of
+ * Collections print views, and the Nearly Due / Past Due dashboard
+ * card modals.
+ */
+
 function reportRemarks(b){
   if(b.status === 'Paid') return 'Fully Paid';
   if(typeof b.missedCount === 'number' && b.missedCount > 0) return b.missedCount + ' missed payment' + (b.missedCount>1?'s':'');
@@ -110,7 +116,7 @@ function showNearlyDueModal(){
       <td>${fmtDate(b.nextDue)}</td>
       <td>${fmt(b.cutoffAmountDue)}</td>
       <td>${daysBefore}</td>
-      <td class="no-print"><button class="btn small gold" onclick="payFromModal(${b['Borrower ID']}, 'nearlyDueModal')">Pay</button></td>
+      <td class="no-print"><button class="btn small gold" onclick="payFromModal(${b['Borrower ID']}, 'nearlyDueModal', '${(b['Loan Type']||'').replace(/'/g,"\\'")}')">Pay</button></td>
     </tr>`;
   }).join('') : `<tr><td colspan="6" class="empty">No borrowers nearly due</td></tr>`;
   openModal('nearlyDueModal');
@@ -127,7 +133,7 @@ function showPastDueModal(){
       <td>${fmtDate(b.nextDue)}</td>
       <td>${fmt(b.cutoffAmountDue)}</td>
       <td>${missed}</td>
-      <td class="no-print"><button class="btn small gold" onclick="payFromModal(${b['Borrower ID']}, 'pastDueModal')">Pay</button></td>
+      <td class="no-print"><button class="btn small gold" onclick="payFromModal(${b['Borrower ID']}, 'pastDueModal', '${(b['Loan Type']||'').replace(/'/g,"\\'")}')">Pay</button></td>
     </tr>`;
   }).join('') : `<tr><td colspan="6" class="empty">No past due borrowers</td></tr>`;
   openModal('pastDueModal');
@@ -144,15 +150,15 @@ function showEligibleRenewalModal(){
       <td>${fmt(b['Loan Amount'])}</td>
       <td>${fmt(b.totalPaid)}</td>
       <td>${fmt(b.balance)}</td>
-      <td class="no-print"><button class="btn small gold" onclick="openRenewLoanModal(${b['Borrower ID']})">Renew</button></td>
+      <td class="no-print"><button class="btn small gold" onclick="openRenewLoanModal(${b['Borrower ID']}, '${(b['Loan Type']||'').replace(/'/g,"\\'")}')">Renew</button></td>
     </tr>`).join('') : `<tr><td colspan="7" class="empty">No borrowers eligible for renewal</td></tr>`;
   openModal('eligibleRenewalModal');
 }
 
 let renewingBorrower = null;
 
-function openRenewLoanModal(borrowerId){
-  const b = (STATE?.borrowers||[]).find(x => x['Borrower ID'] === borrowerId);
+function openRenewLoanModal(borrowerId, loanType){
+  const b = findLoanRow(borrowerId, loanType);
   if(!b){ showToast('Borrower not found.', true); return; }
   renewingBorrower = b;
   document.getElementById('renewLoanErr').textContent = '';

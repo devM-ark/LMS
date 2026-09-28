@@ -1,3 +1,15 @@
+/**
+ * responsive.css — every @media / @page rule in the app, MUST load last
+ * (after styles.css, layout.css, components.css).
+ *
+ * IMPORTANT: the relative order of the blocks below is preserved exactly
+ * as it was in the original single index.html <style> block. CSS resolves
+ * equal-specificity rules by source order, not by which @media block they
+ * sit in — so the final mobile .report-table override at the bottom of
+ * this file must stay last, even below @media print, or it stops winning
+ * on mobile screens. Do not reorder these blocks.
+ */
+
 @media (max-width:720px){ .app{margin-left:64px;padding:0 14px 24px;} }
 
 @media (max-width:720px){
@@ -101,7 +113,10 @@
   @page{ margin:12mm; }
 }
 
-/* Placed last on purpose*/
+/* Placed last on purpose: equal-specificity CSS rules are decided by source
+   order, not by which @media block they're in, so this must come after the
+   base .report-table rule (in components.css) and the @media print block
+   above to actually win on mobile screens. */
 @media (max-width:720px){
   .report-table{ table-layout:auto; width:max-content; min-width:100%; }
   .report-table col{ width:auto !important; }

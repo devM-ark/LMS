@@ -1,3 +1,8 @@
+/**
+ * api.js — the API endpoint, demo/offline sample data, and the single
+ * postAction() wrapper every mutating form goes through.
+ */
+
 const API_URL = "https://script.google.com/macros/s/AKfycbz5R1jf1Z8SadH5CwTc0G3945_MQs_6rac7ps4i8f7vKvqXe5ybI_FvNSfnbX6KaGcv/exec";
 
 const SAMPLE = {

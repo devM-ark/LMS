@@ -1,3 +1,8 @@
+/**
+ * payments.js — the borrower-search autocomplete inside Add Payment,
+ * the payment form, receipts, and voiding a payment.
+ */
+
 function renderPaymentBorrowerResults(query){
   const box = document.getElementById('paymentBorrowerResults');
   if(!box) return;
@@ -9,8 +14,10 @@ function renderPaymentBorrowerResults(query){
     const nameStr = `${b['Last Name']||''} ${b['First Name']||''}`.toLowerCase();
     return idStr.includes(q) || nameStr.includes(q);
   }).slice(0,25);
+  // Show the loan type in every result — a borrower with a Bonus Loan alongside
+  // their other loan appears twice here, once per loan, so staff pick the right one.
   box.innerHTML = matches.length
-    ? matches.map(b=>`<div class="item" data-id="${b['Borrower ID']}">${b['Borrower ID']} — ${b['Last Name']}, ${b['First Name']}</div>`).join('')
+    ? matches.map(b=>`<div class="item" data-id="${b['Borrower ID']}" data-loantype="${(b['Loan Type']||'').replace(/"/g,'&quot;')}">${b['Borrower ID']} — ${b['Last Name']}, ${b['First Name']} (${b['Loan Type']})</div>`).join('')
     : `<div class="item" style="color:var(--muted);cursor:default;">No matches</div>`;
   box.classList.add('show');
 }
@@ -24,15 +31,16 @@ document.getElementById('paymentBorrowerSearch')?.addEventListener('input', (e)=
 document.getElementById('paymentBorrowerResults')?.addEventListener('click', (e)=>{
   const item = e.target.closest('.item[data-id]');
   if(!item) return;
-  selectPaymentBorrower(item.dataset.id);
+  selectPaymentBorrower(item.dataset.id, item.dataset.loantype);
   document.getElementById('paymentBorrowerResults').classList.remove('show');
 });
 
-function selectPaymentBorrower(id){
-  const b = (STATE?.borrowers||[]).find(x => String(x['Borrower ID']) === String(id));
+function selectPaymentBorrower(id, loanType){
+  const b = findLoanRow(id, loanType);
   if(!b) return;
   document.getElementById('paymentBorrowerSelect').value = id;
-  document.getElementById('paymentBorrowerSearch').value = `${id} — ${b['Last Name']}, ${b['First Name']}`;
+  document.getElementById('paymentLoanTypeHidden').value = b['Loan Type'] || '';
+  document.getElementById('paymentBorrowerSearch').value = `${id} — ${b['Last Name']}, ${b['First Name']} (${b['Loan Type']})`;
   document.getElementById('paymentBorrowerName').value = `${b['Last Name']}, ${b['First Name']}`;
 
   // Default (not locked) Mode of Payment based on whether this borrower's
@@ -44,7 +52,11 @@ function selectPaymentBorrower(id){
   const amtInput = document.getElementById('paymentAmountInput');
   const isAmortized = b['Loan Type'] === 'Amortized Loan';
   const household = (STATE?.borrowers||[]).filter(x => String(x['Household ID'] || x['Borrower ID']) === String(b['Household ID'] || b['Borrower ID']));
-  const isGroup = household.length > 1;
+  // A real Group Loan household has more than one DISTINCT borrower in it —
+  // this borrower's own Bonus Loan row (same Borrower ID, no real household)
+  // must never be mistaken for one, or it'd wrongly open the ATM-split screen
+  // for a solo borrower's own two loans.
+  const isGroup = new Set(household.map(x => String(x['Borrower ID']))).size > 1;
 
   document.getElementById('paymentAmountLabel').style.display = (isAmortized || isGroup) ? 'none' : '';
   document.getElementById('amortizedSplitWrap').style.display = (isAmortized && !isGroup) ? '' : 'none';
@@ -137,7 +149,7 @@ function showReceipt(payment, borrower){
 function showReceiptForRow(rowNum){
   const payment = (STATE?.payments||[]).find(p => p._row === rowNum);
   if(!payment){ alert('Payment not found.'); return; }
-  const borrower = (STATE?.borrowers||[]).find(b => String(b['Borrower ID']) === String(payment['Borrower ID']));
+  const borrower = findLoanRow(payment['Borrower ID'], payment['Loan Type']);
   showReceipt(payment, borrower);
 }
 
@@ -183,7 +195,8 @@ document.getElementById('paymentForm').addEventListener('submit', async (e)=>{
 function updateGroupPaymentPreview(){
   const previewEl = document.getElementById('groupPaymentPreview');
   const id = document.getElementById('paymentBorrowerSelect').value;
-  const b = (STATE?.borrowers||[]).find(x => String(x['Borrower ID']) === String(id));
+  const loanType = document.getElementById('paymentLoanTypeHidden').value;
+  const b = findLoanRow(id, loanType);
   if(!b){ previewEl.innerHTML = ''; return; }
   const householdId = b['Household ID'] || b['Borrower ID'];
   const members = (STATE?.borrowers||[]).filter(x => String(x['Household ID'] || x['Borrower ID']) === String(householdId));
@@ -207,7 +220,8 @@ document.getElementById('groupTotalAmountInput').addEventListener('input', updat
 async function submitGroupPayment(btn){
   const msgEl = document.getElementById('paymentMsg');
   const id = document.getElementById('paymentBorrowerSelect').value;
-  const b = (STATE?.borrowers||[]).find(x => String(x['Borrower ID']) === String(id));
+  const loanType = document.getElementById('paymentLoanTypeHidden').value;
+  const b = findLoanRow(id, loanType);
   const householdId = b['Household ID'] || b['Borrower ID'];
   const totalAmount = Number(document.getElementById('groupTotalAmountInput').value) || 0;
   if(totalAmount <= 0){ msgEl.textContent = 'Enter the total amount paid.'; msgEl.style.color = 'var(--bad)'; return; }
@@ -275,9 +289,10 @@ async function voidPayment(rowId){
   finally { voidingInFlight = false; }
 }
 
-function openAddPaymentModal(preselectBorrowerId){
+function openAddPaymentModal(preselectBorrowerId, preselectLoanType){
   document.getElementById('paymentBorrowerSearch').value = '';
   document.getElementById('paymentBorrowerSelect').value = '';
+  document.getElementById('paymentLoanTypeHidden').value = '';
   document.getElementById('paymentBorrowerName').value = '';
   const amtInput = document.getElementById('paymentAmountInput');
   amtInput.value = '';
@@ -297,14 +312,14 @@ function openAddPaymentModal(preselectBorrowerId){
   document.getElementById('groupPaymentPreview').innerHTML = '';
   updateAtmChangeCalcVisibility();
   openModal('addPaymentModal');
-  if(preselectBorrowerId) selectPaymentBorrower(preselectBorrowerId);
+  if(preselectBorrowerId) selectPaymentBorrower(preselectBorrowerId, preselectLoanType);
 }
 
 /** Jumps from the Nearly Due / Past Due dashboard modals straight into
  *  Record Payment for that borrower, without staff needing to re-search. */
-function payFromModal(borrowerId, sourceModalId){
+function payFromModal(borrowerId, sourceModalId, loanType){
   closeModal(sourceModalId);
-  openAddPaymentModal(borrowerId);
+  openAddPaymentModal(borrowerId, loanType);
 }
 
 /** ATM Change Calculator — a pure cash-counting helper for staff, never
@@ -322,15 +337,38 @@ function updateAtmChangeCalcVisibility(){
   }
 }
 
+/** Tiered ATM change/handling fee — verified against the company's actual
+ *  rate table (not a flat ₱10-per-₱500):
+ *    ₱1–500=10   ₱501–1000=15   ₱1001–1500=25   ₱1501–2000=30
+ *    ₱2001–2500=40   ₱2501–3000=45   ₱3001–3500=55   …
+ *  The fee alternates +5 / +10 every ₱500 bracket — this closed-form
+ *  formula reproduces that table exactly and keeps extending it the same
+ *  way for larger excess amounts. */
+function atmChangeFee(excess){
+  const n = Math.ceil(excess / 500); // which 500-peso bracket the excess falls in
+  if (n <= 0) return 0;
+  const k = Math.floor((n - 1) / 2);
+  return 10 + 15 * k + (n % 2 === 0 ? 5 : 0);
+}
+
 function updateAtmChangeCalc(){
   const resultEl = document.getElementById('atmChangeResult');
   const received = Number(document.getElementById('atmAmountReceivedInput').value) || 0;
   const paid = Number(document.getElementById('paymentAmountInput').value) || 0;
   const excess = received - paid;
   if(received <= 0 || excess <= 0){ resultEl.textContent = ''; return; }
-  const charge = Math.ceil(excess / 500) * 10;
-  const netChange = excess - charge;
-  resultEl.innerHTML = `Change to give back: <b>${fmt(netChange)}</b> <span style="color:var(--muted);">(₱${excess.toLocaleString()} excess − ₱${charge} ATM change charge)</span>`;
+  const charge = atmChangeFee(excess);
+  const netChange = Math.round((excess - charge) * 100) / 100;
+
+  const id = document.getElementById('paymentBorrowerSelect').value;
+  const loanType = document.getElementById('paymentLoanTypeHidden').value;
+  const b = id ? findLoanRow(id, loanType) : null;
+  const contact = b && String(b['Contact Number'] || '').trim();
+  const instruction = contact
+    ? `Send the amount ${fmt(netChange)} to ${contact}.`
+    : `No contact number is available for this borrower. The change is ${fmt(netChange)}.`;
+
+  resultEl.innerHTML = `Change to give back: <b>${fmt(netChange)}</b> <span style="color:var(--muted);">(₱${excess.toLocaleString()} excess − ₱${charge} ATM change charge)</span><br>${instruction}`;
 }
 
 document.getElementById('paymentModeSelect').addEventListener('change', updateAtmChangeCalcVisibility);
