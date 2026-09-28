@@ -70,8 +70,13 @@ function isBonusLoanType(loanType){
  *  row per ID). */
 function findLoanRow(id, loanType){
   const rows = (STATE?.borrowers||[]).filter(x => String(x['Borrower ID']) === String(id));
-  if(loanType) return rows.find(x => x['Loan Type'] === loanType) || rows[0];
-  return rows[0];
+  if(!loanType) return rows[0];
+  // Same loan type can appear more than once on an account over time (e.g. a
+  // paid-off Bonus Loan and a new one) — prefer the one still open, else the latest.
+  const sameType = rows.filter(x => x['Loan Type'] === loanType);
+  const open = sameType.filter(x => x.status !== 'Paid' && x.status !== 'Renewed');
+  const pool = open.length ? open : sameType;
+  return pool[pool.length - 1] || rows[0];
 }
 
 function setTodayDefault(inputId){

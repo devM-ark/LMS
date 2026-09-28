@@ -125,10 +125,10 @@ async function enterBorrowerPortal(){
     // A Bonus Loan can share the exact same Borrower ID as another loan in
     // this list, so the option value must carry Loan Type too, not just ID.
     pickerSelect.innerHTML = household.map(m =>
-      `<option value="${m.borrowerId}::${m.loanType}">${m.lastName}, ${m.firstName} — ${m.loanType}${m.isMain ? ' (You)' : ''}</option>`
+      `<option value="${m.borrowerId}::${m.loanType}::${m.row}">${m.lastName}, ${m.firstName} — ${m.loanType}${m.isMain ? ' (You)' : ''}</option>`
     ).join('');
     const defaultEntry = household.find(m => String(m.borrowerId) === String(BORROWER_SESSION.borrowerId)) || household[0];
-    pickerSelect.value = `${defaultEntry.borrowerId}::${defaultEntry.loanType}`;
+    pickerSelect.value = `${defaultEntry.borrowerId}::${defaultEntry.loanType}::${defaultEntry.row}`;
     pickerWrap.style.display = '';
   } else {
     pickerWrap.style.display = 'none';
@@ -137,18 +137,18 @@ async function enterBorrowerPortal(){
   await loadBorrowerSOA(BORROWER_SESSION.borrowerId);
 }
 
-async function loadBorrowerSOA(targetBorrowerId, targetLoanType){
+async function loadBorrowerSOA(targetBorrowerId, targetLoanType, targetRow){
   const contentEl = document.getElementById('borrowerSOAContent');
   contentEl.innerHTML = '<div class="empty">Please wait while we prepare your Statement of Account.</div>';
-  const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({action:'getMySOA', username: BORROWER_SESSION.username, targetBorrowerId, targetLoanType})});
+  const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({action:'getMySOA', username: BORROWER_SESSION.username, targetBorrowerId, targetLoanType, targetRow})});
   const soa = await res.json();
   if(soa.error){ contentEl.innerHTML = `<div class="err">${soa.error}</div>`; return; }
   contentEl.innerHTML = buildSOAHTML(soa);
 }
 
 document.getElementById('householdPickerSelect').addEventListener('change', (e)=>{
-  const [id, loanType] = e.target.value.split('::');
-  loadBorrowerSOA(id, loanType);
+  const [id, loanType, row] = e.target.value.split('::');
+  loadBorrowerSOA(id, loanType, row);
 });
 
 function borrowerLogout(){

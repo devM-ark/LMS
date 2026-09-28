@@ -230,7 +230,9 @@ document.getElementById('renewLoanForm').addEventListener('submit', async (e)=>{
     const out = await postAction('renewLoan', {
       oldBorrowerId: renewingBorrower['Borrower ID'],
       newBorrowerId,
-      newLoanAmount: newAmount
+      newLoanAmount: newAmount,
+      loanType: renewingBorrower['Loan Type'],
+      row: renewingBorrower._row
     });
     if(out && out.success){
       closeModal('renewLoanModal');

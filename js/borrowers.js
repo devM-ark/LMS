@@ -96,7 +96,7 @@ function renderBorrowersTable(){
         <td>${fmt(combinedDue)}</td>
         <td>${fmtDate(earliestDue)}</td>
         <td><span class="status-pill status-${((worst==='Eligible for Renewal'?'Active':worst)||'').replace(/\s+/g,'-')}">${worst==='Eligible for Renewal'?'Active':worst}</span></td>
-        <td class="no-print"><button class="btn small ghost" onclick="event.stopPropagation();showSOA(${main['Borrower ID']}, '${(main['Loan Type']||'').replace(/'/g,"\\'")}')">View</button></td>
+        <td class="no-print"><button class="btn small ghost" onclick="event.stopPropagation();showSOA(${main['Borrower ID']}, '${(main['Loan Type']||'').replace(/'/g,"\\'")}', ${main._row})">View</button></td>
         <td class="no-print admin-only" style="display:${isAdmin()?'':'none'}"></td>
       </tr>`);
 
@@ -120,8 +120,8 @@ function renderBorrowerRow(b, indented){
       <td>${fmt(b.cutoffAmountDue)}</td>
       <td>${fmtDate(b.nextDue)}</td>
       <td><span class="status-pill status-${((b.status==='Eligible for Renewal'?'Active':b.status)||'').replace(/\s+/g,'-')}">${b.status==='Eligible for Renewal'?'Active':b.status}</span></td>
-      <td class="no-print"><button class="btn small ghost" onclick="showSOA(${b['Borrower ID']}, '${(b['Loan Type']||'').replace(/'/g,"\\'")}')">View</button></td>
-      <td class="no-print admin-only" style="display:${isAdmin()?'':'none'}"><button class="btn small ghost" onclick="openEdit(${b['Borrower ID']}, '${(b['Loan Type']||'').replace(/'/g,"\\'")}')">Edit</button></td>
+      <td class="no-print"><button class="btn small ghost" onclick="showSOA(${b['Borrower ID']}, '${(b['Loan Type']||'').replace(/'/g,"\\'")}', ${b._row})">View</button></td>
+      <td class="no-print admin-only" style="display:${isAdmin()?'':'none'}"><button class="btn small ghost" onclick="openEdit(${b['Borrower ID']}, '${(b['Loan Type']||'').replace(/'/g,"\\'")}', ${b._row})">Edit</button></td>
     </tr>`;
 }
 
@@ -166,6 +166,13 @@ function refreshLoanAmountField(){
   const newField = document.getElementById('borrowerLoanAmountInput');
   newField.addEventListener(newField.tagName === 'SELECT' ? 'change' : 'input', updateCutoffAuto);
 
+  // Bonus Period (Mid-Year / Year-End) only applies to a Bonus Loan.
+  const bonusWrap2 = document.getElementById('bonusPeriodFieldWrap');
+  const bonusSel2 = document.getElementById('bonusPeriodSelect');
+  const showBonus = isBonusLoanType(type);
+  bonusWrap2.style.display = showBonus ? '' : 'none';
+  bonusSel2.disabled = !showBonus;
+
   // Payment Schedule (Cutoff vs Monthly) only applies to Regular Loan.
   const scheduleWrap = document.getElementById('paymentScheduleFieldWrap');
   const scheduleSelect = document.getElementById('borrowerPaymentScheduleSelect');
@@ -187,12 +194,6 @@ function refreshLoanTypeOptionsForGroup(){
   const typeSel = document.getElementById('borrowerLoanTypeSelect');
   if(!groupSel || !typeSel) return;
   const category = document.getElementById('loanCategoryUISelect')?.value;
-  if(category === 'Bonus-Existing'){
-    // Not disabled (disabled <select> fields don't submit) — it's the only option anyway.
-    typeSel.innerHTML = '<option value="Bonus Loan">Bonus Loan</option>';
-    refreshLoanAmountField();
-    return;
-  }
   const group = groupSel.value;
   const loanTypes = STATE?.loanTypes || [];
   let names;
@@ -209,8 +210,14 @@ function refreshLoanTypeOptionsForGroup(){
       ? ['Regular Loan','Amortized Loan','Add-on Diminishing']
       : ['Regular Loan'];
   }
-  names = names.filter(n => !isBonusLoanType(n));
-  const current = typeSel.value;
+  // Bonus Loan can only be added to an account that already exists.
+  const isExisting = category === 'Existing-Account';
+  if(isExisting){
+    if(!names.some(isBonusLoanType)) names.push('Bonus Loan');
+  } else {
+    names = names.filter(n => !isBonusLoanType(n));
+  }
+  const current = typeSel.value || (isExisting ? 'Bonus Loan' : '');
   typeSel.innerHTML = names.map(n => `<option${n===current?' selected':''}>${n}</option>`).join('');
   refreshLoanAmountField();
 }
@@ -296,7 +303,7 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
     msgEl.style.color = 'var(--bad)';
     return;
   }
-  if(loanCategoryUIVal === 'Bonus-Existing' && !document.getElementById('borrowerIdField').value){
+  if(loanCategoryUIVal === 'Existing-Account' && !document.getElementById('borrowerIdField').value){
     msgEl.textContent = 'Search and select which existing borrower this Bonus Loan belongs to.';
     msgEl.style.color = 'var(--bad)';
     return;
@@ -350,13 +357,16 @@ document.getElementById('editForm').addEventListener('submit', async (e)=>{
   btn.disabled = true;
   try{
     const data = Object.fromEntries(new FormData(e.target));
+    if(editingRow) data._row = editingRow;
     if(await postAction('updateBorrower', {data})){ closeModal('editModal'); loadData(); }
   } finally { btn.disabled = false; }
 });
 
-function openEdit(id, loanType){
-  const b = findLoanRow(id, loanType);
+let editingRow = null;
+function openEdit(id, loanType, row){
+  const b = (row && (STATE.borrowers||[]).find(x => x._row === row)) || findLoanRow(id, loanType);
   if(!b) return;
+  editingRow = b._row || null;
   const form = document.getElementById('editForm');
   ['Borrower ID','Last Name','First Name','Loan Type','Contact Number','Address']
     .forEach(k => { if(form[k]) form[k].value = b[k] ?? ''; });
@@ -433,6 +443,10 @@ function openAddBorrowerModal(){
 /** Undoes what selectBonusExistingBorrower() locked down, so the form goes
  *  back to normal manual entry when the category is switched away from
  *  "Bonus Loan — Add to an Existing Borrower's Account". */
+function setAcctFieldsHidden(hidden){
+  document.querySelectorAll('#borrowerForm .acct-field').forEach(el => { el.style.display = hidden ? 'none' : ''; });
+}
+
 function resetBonusExistingFields(){
   document.getElementById('bonusBorrowerSearchWrap').style.display = 'none';
   document.getElementById('bonusBorrowerSearchInput').value = '';
@@ -440,14 +454,12 @@ function resetBonusExistingFields(){
   document.getElementById('bonusBorrowerSearchResults').classList.remove('show');
   document.getElementById('bonusPeriodFieldWrap').style.display = 'none';
   document.getElementById('bonusPeriodSelect').disabled = true;
+  setAcctFieldsHidden(false);
   const idField = document.getElementById('borrowerIdField');
-  const lastNameField = document.querySelector('#borrowerForm input[name="Last Name"]');
-  const firstNameField = document.querySelector('#borrowerForm input[name="First Name"]');
-  const groupSel = document.getElementById('borrowerGroupSelect');
+  ['Last Name','First Name','Contact Number','Address'].forEach(n => {
+    const f = document.querySelector('#borrowerForm input[name="'+n+'"]'); if(f) f.value = '';
+  });
   idField.value = computeNextBorrowerId();
-  if(lastNameField){ lastNameField.readOnly = false; lastNameField.style.background = ''; }
-  if(firstNameField){ firstNameField.readOnly = false; firstNameField.style.background = ''; }
-  if(groupSel){ groupSel.disabled = false; }
 }
 
 document.getElementById('loanCategoryUISelect').addEventListener('change', (e)=>{
@@ -456,10 +468,9 @@ document.getElementById('loanCategoryUISelect').addEventListener('change', (e)=>
   const bonusWrap = document.getElementById('bonusBorrowerSearchWrap');
   const categoryHidden = document.getElementById('loanCategoryHidden');
   const householdHidden = document.getElementById('householdIdHidden');
-  if(val !== 'Bonus-Existing') resetBonusExistingFields();
+  if(val !== 'Existing-Account') resetBonusExistingFields();
+  document.getElementById('borrowerLoanTypeSelect').innerHTML = ''; // so the right default is picked for this mode
   bonusWrap.style.display = 'none';
-  document.getElementById('bonusPeriodFieldWrap').style.display = 'none';
-  document.getElementById('bonusPeriodSelect').disabled = (val !== 'Bonus-Existing');
   if(val === 'Individual'){
     categoryHidden.value = 'Individual';
     householdHidden.value = '';
@@ -472,12 +483,12 @@ document.getElementById('loanCategoryUISelect').addEventListener('change', (e)=>
     categoryHidden.value = 'Group';
     householdHidden.value = ''; // set once a main borrower is picked below
     searchWrap.style.display = '';
-  } else { // Bonus-Existing
+  } else { // Existing-Account
     categoryHidden.value = 'Individual';
     householdHidden.value = '';
     searchWrap.style.display = 'none';
     bonusWrap.style.display = '';
-    document.getElementById('bonusPeriodFieldWrap').style.display = '';
+    setAcctFieldsHidden(true); // name/contact/cutoff come from the existing account
   }
   refreshLoanTypeOptionsForGroup();
 });
@@ -488,39 +499,46 @@ document.getElementById('bonusBorrowerSearchInput').addEventListener('input', (e
   document.getElementById('bonusBorrowerSelectedInfo').textContent = '';
   const resultsEl = document.getElementById('bonusBorrowerSearchResults');
   if(!q){ resultsEl.classList.remove('show'); return; }
-  // Any borrower row (main or co-borrower) can be picked — the server does the
-  // authoritative "has an active loan / no active Bonus Loan already" check;
-  // this is just a fast, friendly filter so staff aren't searching blind.
-  const matches = (STATE?.borrowers||[]).filter(b => {
-    if(isBonusLoanType(b['Loan Type'])) return false; // don't offer an existing Bonus Loan row itself
+  // One result per account (Borrower ID), listing the loans it already has.
+  // The server does the authoritative eligibility check on save.
+  const byId = new Map();
+  (STATE?.borrowers||[]).forEach(b => {
     const idStr = String(b['Borrower ID']||'').toLowerCase();
     const nameStr = `${b['Last Name']||''} ${b['First Name']||''}`.toLowerCase();
-    return idStr.includes(q) || nameStr.includes(q);
-  }).slice(0, 8);
+    if(!(idStr.includes(q) || nameStr.includes(q))) return;
+    const k = String(b['Borrower ID']);
+    if(!byId.has(k)) byId.set(k, []);
+    byId.get(k).push(b);
+  });
+  const matches = [...byId.values()].slice(0, 8);
   resultsEl.innerHTML = matches.length
-    ? matches.map(b => `<div class="item" onclick="selectBonusExistingBorrower(${b['Borrower ID']}, '${(b['Loan Type']||'').replace(/'/g,"\\'")}')">${b['Last Name']}, ${b['First Name']} — ID ${b['Borrower ID']} (${b['Loan Type']}, ${b.status})</div>`).join('')
-    : `<div class="item" style="color:var(--muted);cursor:default;">No matching borrower found</div>`;
+    ? matches.map(rows => { const b = rows[0];
+        const loans = rows.filter(r => r.status !== 'Paid' && r.status !== 'Renewed').map(r => r['Loan Type']).join(', ') || 'no active loan';
+        return `<div class="item" onclick="selectBonusExistingBorrower(${b['Borrower ID']})">${b['Last Name']}, ${b['First Name']} — ID ${b['Borrower ID']} (${loans})</div>`; }).join('')
+    : `<div class="item" style="color:var(--muted);cursor:default;">No matching account found</div>`;
   resultsEl.classList.add('show');
 });
 
-function selectBonusExistingBorrower(borrowerId, loanType){
-  const b = findLoanRow(borrowerId, loanType);
+function selectBonusExistingBorrower(borrowerId){
+  const rows = (STATE?.borrowers||[]).filter(x => String(x['Borrower ID']) === String(borrowerId));
+  const b = rows[0];
   if(!b) return;
   const name = `${b['Last Name']}, ${b['First Name']}`;
+  const active = rows.filter(r => r.status !== 'Paid' && r.status !== 'Renewed').map(r => r['Loan Type']);
   document.getElementById('borrowerIdField').value = b['Borrower ID'];
   document.getElementById('bonusBorrowerSearchInput').value = name;
   document.getElementById('bonusBorrowerSelectedInfo').textContent =
-    `Bonus Loan will be added to ${name}'s existing account (ID ${formatBorrowerId(b)}).`;
+    `New loan will be added to ${name}'s account (ID ${formatBorrowerId(b)}). Current active loans: ${active.join(', ') || 'none'}.`;
   document.getElementById('bonusBorrowerSearchResults').classList.remove('show');
   document.getElementById('loanCategoryHidden').value = b['Loan Category'] || 'Individual';
   document.getElementById('householdIdHidden').value = b['Household ID'] || '';
-  const lastNameField = document.querySelector('#borrowerForm input[name="Last Name"]');
-  const firstNameField = document.querySelector('#borrowerForm input[name="First Name"]');
+  const set = (n, v) => { const f = document.querySelector('#borrowerForm input[name="'+n+'"]'); if(f) f.value = v ?? ''; };
+  set('Last Name', b['Last Name']); set('First Name', b['First Name']);
+  set('Contact Number', b['Contact Number']); set('Address', b['Address']);
   const groupSel = document.getElementById('borrowerGroupSelect');
-  if(lastNameField){ lastNameField.value = b['Last Name']; lastNameField.readOnly = true; lastNameField.style.background = '#EEF3F5'; }
-  if(firstNameField){ firstNameField.value = b['First Name']; firstNameField.readOnly = true; firstNameField.style.background = '#EEF3F5'; }
-  // Not disabled (disabled <select> fields don't submit) — just pre-filled to match.
-  if(groupSel){ groupSel.value = b['Group'] || 'Teachers'; }
+  if(groupSel) groupSel.value = b['Group'] || 'Teachers';
+  const atm = document.getElementById('borrowerAtmOptionSelect');
+  if(atm) atm.value = String(b['ATMOption']).trim().toLowerCase() === 'yes' ? 'Yes' : 'No';
   refreshLoanTypeOptionsForGroup();
 }
 
@@ -553,14 +571,14 @@ function selectCoBorrowerHousehold(borrowerId, name){
   document.getElementById('coBorrowerSearchResults').classList.remove('show');
 }
 
-async function showSOA(id, loanType){
+async function showSOA(id, loanType, row){
   let soa;
   if(!API_URL){
     const b = SAMPLE.borrowers.find(x=>x['Borrower ID']===id) || SAMPLE.borrowers[0];
     soa = {soaNo:'SOA-DEMO', dateGenerated: new Date().toISOString().slice(0,10), borrower:b, computed:b,
            payments: SAMPLE.payments.filter(p=>p['Borrower ID']===id)};
   } else {
-    const res = await fetch(API_URL + '?action=soa&id=' + id + (loanType ? '&loanType=' + encodeURIComponent(loanType) : ''));
+    const res = await fetch(API_URL + '?action=soa&id=' + id + (loanType ? '&loanType=' + encodeURIComponent(loanType) : '') + (row ? '&row=' + row : ''));
     soa = await res.json();
     if(soa.error){ alert(soa.error); return; }
   }
