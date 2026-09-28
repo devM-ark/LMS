@@ -412,9 +412,9 @@
       <label style="grid-column:1/-1;">Loan Category
         <select id="loanCategoryUISelect">
           <option value="Individual">Individual</option>
-          <option value="Group-Main">Group Loan - Start New Group (I am the Main Borrower)</option>
-          <option value="Group-Co">Group Loan - Add as Co-Borrower to an Existing Group</option>
-          <option value="Existing-Account">Add Another Loan to an Existing Account (same Borrower ID)</option>
+          <option value="Group-Main">Group Loan - Main Borrower</option>
+          <option value="Group-Co">Group Loan - Ride On</option>
+          <option value="Existing-Account">Add Another Loan to an Existing Account</option>
         </select>
       </label>
       <div id="coBorrowerSearchWrap" style="grid-column:1/-1;display:none;position:relative;">
@@ -459,8 +459,8 @@
       <label>Loan Amount<span id="loanAmountFieldWrap"><input name="Loan Amount" id="borrowerLoanAmountInput" type="number" required></span></label>
       <label id="paymentScheduleFieldWrap" style="display:none;">Payment Schedule
         <select name="Payment Schedule" id="borrowerPaymentScheduleSelect">
-          <option value="Cutoff">Twice-Monthly Cutoff (default)</option>
-          <option value="Monthly">Monthly - one due date a month, same day as release</option>
+          <option value="Cutoff">Per Cut-Off</option>
+          <option value="Monthly">Monthly</option>
         </select>
       </label>
       <label>Term (Months) (auto)<input name="Term (Months)" id="borrowerTermInput" type="number" readonly style="background:#EEF3F5;"></label>
