@@ -162,3 +162,14 @@ header.top.borrower-header .whoami{display:flex;align-items:center;gap:10px;flex
 #collectionsTotalRow td{font-family:Arial,sans-serif;font-weight:700;color:var(--navy);border-top:2px solid var(--navy);background:#fff;padding:8px 10px;}
 #collectionsTotalRow td:first-child{text-align:right;}
 #collectionsTotalRow td:last-child{text-align:right;}
+
+/* Print Reports: Total Active Borrowers per Cutoff Schedule */
+.abc-wrap{margin-bottom:16px;}
+.abc-title{font-family:Arial,sans-serif;font-weight:700;font-size:.95rem;color:var(--navy);margin-bottom:8px;}
+.abc-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;}
+.abc-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 8px;text-align:center;font-family:Arial,sans-serif;}
+.abc-card .abc-name{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.abc-card .abc-n{font-size:1.4rem;font-weight:700;color:var(--navy);line-height:1.3;}
+.abc-card .abc-ride{margin-top:4px;padding-top:4px;border-top:1px dashed var(--line);font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
+.abc-card .abc-ride b{display:block;font-size:.85rem;color:var(--navy);letter-spacing:0;}
+@media (max-width:700px){.abc-grid{grid-template-columns:1fr 1fr;}}

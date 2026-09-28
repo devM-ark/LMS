@@ -149,6 +149,12 @@ function refreshLoanAmountField(){
   if(!typeSel || !wrap) return;
   const type = typeSel.value;
   const group = groupSel ? groupSel.value : 'Teachers';
+  // This function also runs on every background data refresh — remember what
+  // staff already chose/typed so the amount never snaps back to the lowest tier.
+  const prevField = document.getElementById('borrowerLoanAmountInput');
+  const prevVal = prevField ? prevField.value : '';
+  const sameContext = wrap.dataset.key === type + '|' + group;
+  wrap.dataset.key = type + '|' + group;
   // Add-on Diminishing is a one-off, borrower-specific amount, not a repeatable
   // rate tier, so it always gets a plain manual entry field. Bonus Loan DOES
   // have configured tiers (amount + term + interest fee in Loan Types &
@@ -164,6 +170,9 @@ function refreshLoanAmountField(){
     }
   }
   const newField = document.getElementById('borrowerLoanAmountInput');
+  if(sameContext && prevVal !== '' && (newField.tagName !== 'SELECT' || [...newField.options].some(o => o.value === prevVal))){
+    newField.value = prevVal;
+  }
   newField.addEventListener(newField.tagName === 'SELECT' ? 'change' : 'input', updateCutoffAuto);
 
   // Bonus Period (Mid-Year / Year-End) only applies to a Bonus Loan.
@@ -210,13 +219,9 @@ function refreshLoanTypeOptionsForGroup(){
       ? ['Regular Loan','Amortized Loan','Add-on Diminishing']
       : ['Regular Loan'];
   }
-  // Bonus Loan can only be added to an account that already exists.
+  // Bonus Loan can be a borrower's first loan, or added later to an existing account.
   const isExisting = category === 'Existing-Account';
-  if(isExisting){
-    if(!names.some(isBonusLoanType)) names.push('Bonus Loan');
-  } else {
-    names = names.filter(n => !isBonusLoanType(n));
-  }
+  if(!names.some(isBonusLoanType)) names.push('Bonus Loan');
   const current = typeSel.value || (isExisting ? 'Bonus Loan' : '');
   typeSel.innerHTML = names.map(n => `<option${n===current?' selected':''}>${n}</option>`).join('');
   refreshLoanAmountField();
@@ -312,6 +317,7 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
   const originalLabel = btn.textContent;
   btn.textContent = 'Saving…';
   const data = Object.fromEntries(new FormData(e.target));
+  if(loanCategoryUIVal === 'Existing-Account') data['Borrower ID'] = existingAccountId || data['Borrower ID'];
   msgEl.textContent = 'Please wait while we save the borrower.';
   msgEl.style.color = 'var(--muted)';
   try{
@@ -363,6 +369,7 @@ document.getElementById('editForm').addEventListener('submit', async (e)=>{
 });
 
 let editingRow = null;
+let existingAccountId = null; // Borrower ID picked in "Add Another Loan to an Existing Account"
 function openEdit(id, loanType, row){
   const b = (row && (STATE.borrowers||[]).find(x => x._row === row)) || findLoanRow(id, loanType);
   if(!b) return;
@@ -448,6 +455,7 @@ function setAcctFieldsHidden(hidden){
 }
 
 function resetBonusExistingFields(){
+  existingAccountId = null;
   document.getElementById('bonusBorrowerSearchWrap').style.display = 'none';
   document.getElementById('bonusBorrowerSearchInput').value = '';
   document.getElementById('bonusBorrowerSelectedInfo').textContent = '';
@@ -496,6 +504,7 @@ document.getElementById('loanCategoryUISelect').addEventListener('change', (e)=>
 document.getElementById('bonusBorrowerSearchInput').addEventListener('input', (e)=>{
   const q = e.target.value.trim().toLowerCase();
   document.getElementById('borrowerIdField').value = '';
+  existingAccountId = null;
   document.getElementById('bonusBorrowerSelectedInfo').textContent = '';
   const resultsEl = document.getElementById('bonusBorrowerSearchResults');
   if(!q){ resultsEl.classList.remove('show'); return; }
@@ -525,6 +534,7 @@ function selectBonusExistingBorrower(borrowerId){
   if(!b) return;
   const name = `${b['Last Name']}, ${b['First Name']}`;
   const active = rows.filter(r => r.status !== 'Paid' && r.status !== 'Renewed').map(r => r['Loan Type']);
+  existingAccountId = b['Borrower ID'];
   document.getElementById('borrowerIdField').value = b['Borrower ID'];
   document.getElementById('bonusBorrowerSearchInput').value = name;
   document.getElementById('bonusBorrowerSelectedInfo').textContent =

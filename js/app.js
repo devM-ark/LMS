@@ -200,13 +200,17 @@ function render(){
         <td class="no-print"><button class="btn small danger" onclick="deleteLoanType('${lt.LoanTypeKey}')">Delete</button></td>
       </tr>`).join('') : `<tr><td colspan="8" class="empty">No loan types yet</td></tr>`;
     // keep the Add Borrower loan-type dropdown in sync (full list; group filter applied separately)
-    refreshLoanTypeOptionsForGroup();
+    if(!document.getElementById('addBorrowerModal')?.classList.contains('open')) refreshLoanTypeOptionsForGroup();
   }
 
   // Auto-generate next Borrower ID (YYYY + sequence, e.g. 2026001 -> 2026002)
+  // Skip while the Add Borrower form is open: this refresh runs every 30s and
+  // must not overwrite an ID staff picked (Existing Account) or a form in progress.
   const idField = document.getElementById('borrowerIdField');
-  if(idField) idField.value = computeNextBorrowerId();
+  const addOpen = document.getElementById('addBorrowerModal')?.classList.contains('open');
+  if(idField && !addOpen) idField.value = computeNextBorrowerId();
 
   renderBorrowersTable();
   renderPaymentsTable();
+  renderActiveBorrowerCards();
 }

@@ -8,7 +8,10 @@ function renderPaymentBorrowerResults(query){
   if(!box) return;
   const q = (query||'').trim().toLowerCase();
   if(!q){ box.classList.remove('show'); box.innerHTML=''; return; }
-  const eligible = (STATE?.borrowers||[]).filter(b => (b.status !== 'Paid' && b.status !== 'Renewed'));
+  // Only main borrowers: a group's co-borrowers are paid through the main
+  // borrower's group payment (a co-borrower has a Household ID pointing to someone else).
+  const isCoBorrower = b => b['Household ID'] && String(b['Household ID']) !== String(b['Borrower ID']);
+  const eligible = (STATE?.borrowers||[]).filter(b => (b.status !== 'Paid' && b.status !== 'Renewed') && !isCoBorrower(b));
   const matches = eligible.filter(b=>{
     const idStr = String(b['Borrower ID']||'').toLowerCase();
     const nameStr = `${b['Last Name']||''} ${b['First Name']||''}`.toLowerCase();
@@ -56,7 +59,7 @@ function selectPaymentBorrower(id, loanType){
   // this borrower's own Bonus Loan row (same Borrower ID, no real household)
   // must never be mistaken for one, or it'd wrongly open the ATM-split screen
   // for a solo borrower's own two loans.
-  const isGroup = new Set(household.map(x => String(x['Borrower ID']))).size > 1;
+  const isGroup = !isBonusLoanType(b['Loan Type']) && new Set(household.map(x => String(x['Borrower ID']))).size > 1;
 
   document.getElementById('paymentAmountLabel').style.display = (isAmortized || isGroup) ? 'none' : '';
   document.getElementById('amortizedSplitWrap').style.display = (isAmortized && !isGroup) ? '' : 'none';
@@ -200,20 +203,34 @@ function updateGroupPaymentPreview(){
   if(!b){ previewEl.innerHTML = ''; return; }
   const householdId = b['Household ID'] || b['Borrower ID'];
   const members = (STATE?.borrowers||[]).filter(x => String(x['Household ID'] || x['Borrower ID']) === String(householdId));
-  const splitLoans = members.filter(x => x['Loan Type']==='Regular Loan' || x['Loan Type']==='Amortized Loan')
-    .sort((x,y) => (String(x['Borrower ID'])===String(householdId)?0:1) - (String(y['Borrower ID'])===String(householdId)?0:1));
+  const isOpen = x => !x['Renewed To'] && x.status !== 'Paid' && x.status !== 'Renewed';
+  const mainFirst = (x,y) => (String(x['Borrower ID'])===String(householdId)?0:1) - (String(y['Borrower ID'])===String(householdId)?0:1);
+  const splitLoans = members.filter(x => isOpen(x) && (x['Loan Type']==='Regular Loan' || x['Loan Type']==='Amortized Loan')).sort(mainFirst);
+  const bonusLoans = members.filter(x => isOpen(x) && isBonusLoanType(x['Loan Type']) && Number(x.balance) > 0).sort(mainFirst);
 
   let remaining = Number(document.getElementById('groupTotalAmountInput').value) || 0;
+  let totalDue = 0;
+  const line = (r, isBonus) =>
+    `<div class="group-payment-row"><span>${r.name} (${r.loanType})</span><span>${fmt(r.amt)} / ${fmt(r.due)}${r.short && !isBonus ? ' <span style="color:var(--bad);font-weight:700;">SHORT</span>' : ''}</span></div>`;
   const rows = splitLoans.map(m => {
     const due = Number(m['Amount/Cut-off']) || 0;
     const amt = Math.max(0, Math.min(due, remaining));
     remaining = Math.round((remaining - amt) * 100) / 100;
+    totalDue += due;
     return { name: `${m['Last Name']}, ${m['First Name']}`, loanType: m['Loan Type'], due, amt, short: amt < due };
   });
+  const bonusRows = bonusLoans.map(m => {
+    const due = Number(m.balance) || 0;
+    const amt = Math.max(0, Math.min(due, remaining));
+    remaining = Math.round((remaining - amt) * 100) / 100;
+    return { name: `${m['Last Name']}, ${m['First Name']}`, loanType: m['Loan Type'], due, amt, short: false };
+  });
 
-  previewEl.innerHTML = rows.map(r =>
-    `<div class="group-payment-row"><span>${r.name} (${r.loanType})</span><span>${fmt(r.amt)} / ${fmt(r.due)}${r.short ? ' <span style="color:var(--bad);font-weight:700;">SHORT</span>' : ''}</span></div>`
-  ).join('');
+  previewEl.innerHTML = rows.map(r => line(r, false)).join('')
+    + `<div class="group-payment-row" style="font-weight:700;border-top:2px solid var(--line);"><span style="color:inherit;">Total Amount Due</span><span>${fmt(totalDue)}</span></div>`
+    + (bonusRows.length
+        ? `<div style="margin-top:8px;font-size:.78rem;color:var(--muted);">Bonus Loan — paid only from any amount above the total due:</div>` + bonusRows.map(r => line(r, true)).join('')
+        : '');
 }
 document.getElementById('groupTotalAmountInput').addEventListener('input', updateGroupPaymentPreview);
 

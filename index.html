@@ -169,6 +169,10 @@
 
     <section id="tab-reports" class="admin-only">
       <h2 class="section-title">Print Reports</h2>
+      <div class="abc-wrap">
+        <div class="abc-title">Total Active Borrowers</div>
+        <div class="abc-grid" id="activeBorrowerCards"></div>
+      </div>
       <form id="reportFilterForm"></form>
       <form id="collectionsFilterForm"></form>
       <div class="reports-grid">
@@ -459,7 +463,7 @@
       <label>Loan Amount<span id="loanAmountFieldWrap"><input name="Loan Amount" id="borrowerLoanAmountInput" type="number" required></span></label>
       <label id="paymentScheduleFieldWrap" style="display:none;">Payment Schedule
         <select name="Payment Schedule" id="borrowerPaymentScheduleSelect">
-          <option value="Cutoff">Per Cut-Off</option>
+          <option value="Cutoff">Per Cutoff</option>
           <option value="Monthly">Monthly</option>
         </select>
       </label>
@@ -470,8 +474,8 @@
       <label class="acct-field">Address<input name="Address"></label>
       <label class="acct-field">With ATM Card? (card surrendered)
         <select name="ATMOption" id="borrowerAtmOptionSelect">
-          <option value="No">No</option>
           <option value="Yes">Yes</option>
+          <option value="No">No</option>
         </select>
       </label>
       <button class="btn gold" type="submit">Add Borrower</button>
@@ -682,14 +686,14 @@
   </div>
 </div>
 
-<script src="js/utilities.js?v=20260929"></script>
-<script src="js/api.js?v=20260929"></script>
-<script src="js/navigation.js?v=20260929"></script>
-<script src="js/borrowers.js?v=20260929"></script>
-<script src="js/payments.js?v=20260929"></script>
-<script src="js/reports.js?v=20260929"></script>
-<script src="js/settings.js?v=20260929"></script>
-<script src="js/borrower-portal.js?v=20260929"></script>
-<script src="js/app.js?v=20260929"></script>
+<script src="js/utilities.js?v=20261001"></script>
+<script src="js/api.js?v=20261001"></script>
+<script src="js/navigation.js?v=20261001"></script>
+<script src="js/borrowers.js?v=20261001"></script>
+<script src="js/payments.js?v=20261001"></script>
+<script src="js/reports.js?v=20261001"></script>
+<script src="js/settings.js?v=20261001"></script>
+<script src="js/borrower-portal.js?v=20261001"></script>
+<script src="js/app.js?v=20261001"></script>
 </body>
 </html>

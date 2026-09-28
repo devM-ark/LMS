@@ -249,3 +249,29 @@ document.getElementById('renewLoanForm').addEventListener('submit', async (e)=>{
     }
   } finally { btn.disabled = false; btn.textContent = originalLabel; }
 });
+
+
+/** Print Reports → "Total Active Borrowers": one card per Cutoff Schedule.
+ *  Counts people (distinct Borrower IDs), not loans — someone with a Regular
+ *  and a Bonus Loan counts once. "Ride On" (group co-borrowers) are counted
+ *  separately and are NOT included in the main number. */
+function renderActiveBorrowerCards(){
+  const el = document.getElementById('activeBorrowerCards');
+  if(!el) return;
+  const groups = ['Teachers','Tiaong','Candelaria','Sta. Rosa','Santa Cruz'];
+  const isActive = b => !b['Renewed To'] && b.status !== 'Paid' && b.status !== 'Renewed';
+  const isRideOn = b => b['Household ID'] && String(b['Household ID']) !== String(b['Borrower ID']);
+  const main = {}, ride = {};
+  groups.forEach(g => { main[g] = new Set(); ride[g] = new Set(); });
+  (STATE?.borrowers||[]).filter(isActive).forEach(b => {
+    const g = b['Group'];
+    if(!main[g]) return;
+    (isRideOn(b) ? ride[g] : main[g]).add(String(b['Borrower ID']));
+  });
+  el.innerHTML = groups.map(g => `
+    <div class="abc-card">
+      <div class="abc-name">${g}</div>
+      <div class="abc-n">${main[g].size}</div>
+      <div class="abc-ride">Ride On<b>${ride[g].size}</b></div>
+    </div>`).join('');
+}
