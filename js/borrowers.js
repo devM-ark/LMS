@@ -80,6 +80,7 @@ function renderBorrowersTable(){
     }
 
     const main = members.find(x => String(x['Borrower ID']) === key) || members[0];
+    const isRealHousehold = new Set(members.map(x => String(x['Borrower ID']))).size > 1;
     const combinedDue = members
       .filter(x => x['Loan Type']==='Regular Loan' || x['Loan Type']==='Amortized Loan')
       .reduce((s,x) => s + (Number(x.cutoffAmountDue)||0), 0);
@@ -87,12 +88,13 @@ function renderBorrowersTable(){
     const worst = members.reduce((acc,x) => priorityOrder.indexOf(x.status) < priorityOrder.indexOf(acc) ? x.status : acc, members[0].status);
     const earliestDue = members.filter(x => x.nextDue).map(x => x.nextDue).sort()[0];
     const isExpanded = expandedHouseholds.has(key);
+    const groupLabel = isRealHousehold ? 'Group' : 'Multiple Loans';
 
     rowsHtml.push(`
       <tr style="cursor:pointer;" onclick="toggleHouseholdExpand('${key}')">
         <td>${formatBorrowerId(main)}</td>
-        <td>${main['Last Name']}, ${main['First Name']} <span style="font-size:.68rem;color:var(--muted);">(${isExpanded?'▾':'▸'} Group · ${members.length} loans)</span></td>
-        <td>Group Loan</td>
+        <td>${main['Last Name']}, ${main['First Name']} <span style="font-size:.68rem;color:var(--muted);">(${isExpanded?'▾':'▸'} ${groupLabel} · ${members.length} loans)</span></td>
+        <td>${isRealHousehold ? 'Group Loan' : 'Multiple Loans'}</td>
         <td>${fmt(combinedDue)}</td>
         <td>${fmtDate(earliestDue)}</td>
         <td><span class="status-pill status-${((worst==='Eligible for Renewal'?'Active':worst)||'').replace(/\s+/g,'-')}">${worst==='Eligible for Renewal'?'Active':worst}</span></td>

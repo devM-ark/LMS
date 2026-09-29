@@ -91,6 +91,19 @@ function cutoffDaysForGroupDisplay(group){
   return fiveTwenty.indexOf(g) !== -1 ? '5/20' : '15/30';
 }
 
+/** Google Sheets silently strips a leading 0 from a phone number typed into
+ *  a cell that isn't formatted as Plain Text (it reads "09171234567" as the
+ *  number 9171234567). Restores it for display wherever a contact number is
+ *  shown, so staff always see a dialable number even if the sheet cell lost
+ *  it. Doesn't touch the stored data — see the Settings note for fixing that. */
+function normalizePhoneDisplay(raw){
+  const s = String(raw||'').trim();
+  if(!s) return s;
+  const digits = s.replace(/\D/g,'');
+  if(/^9\d{9}$/.test(digits)) return '0' + digits;
+  return s;
+}
+
 function findLoanRow(id, loanType){
   const rows = (STATE?.borrowers||[]).filter(x => String(x['Borrower ID']) === String(id));
   if(!loanType) return rows[0];

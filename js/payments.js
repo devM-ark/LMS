@@ -12,15 +12,22 @@ function renderPaymentBorrowerResults(query){
   // borrower's group payment (a co-borrower has a Household ID pointing to someone else).
   const isCoBorrower = b => b['Household ID'] && String(b['Household ID']) !== String(b['Borrower ID']);
   const eligible = (STATE?.borrowers||[]).filter(b => (b.status !== 'Paid' && b.status !== 'Renewed') && !isCoBorrower(b));
-  const matches = eligible.filter(b=>{
+  const matched = eligible.filter(b=>{
     const idStr = String(b['Borrower ID']||'').toLowerCase();
     const nameStr = `${b['Last Name']||''} ${b['First Name']||''}`.toLowerCase();
     return idStr.includes(q) || nameStr.includes(q);
-  }).slice(0,25);
-  // Show the loan type in every result — a borrower with a Bonus Loan alongside
-  // their other loan appears twice here, once per loan, so staff pick the right one.
+  });
+  // One result per account (Borrower ID): an account with more than one open
+  // loan (e.g. Amortized + Regular, or + Bonus) shows once, listing every
+  // loan type — clicking it opens the combined Multiple Loan Payment screen
+  // instead of forcing staff to search twice and pick one loan at a time.
+  const byId = new Map();
+  matched.forEach(b => { const k = String(b['Borrower ID']); if(!byId.has(k)) byId.set(k, []); byId.get(k).push(b); });
+  const matches = [...byId.values()].slice(0,25);
   box.innerHTML = matches.length
-    ? matches.map(b=>`<div class="item" data-id="${b['Borrower ID']}" data-loantype="${(b['Loan Type']||'').replace(/"/g,'&quot;')}">${b['Borrower ID']} — ${b['Last Name']}, ${b['First Name']} (${b['Loan Type']})</div>`).join('')
+    ? matches.map(rows => { const b = rows[0];
+        const types = rows.map(r => r['Loan Type']).join(', ');
+        return `<div class="item" data-id="${b['Borrower ID']}" data-loantype="${(rows.length===1 ? b['Loan Type'] : '').replace(/"/g,'&quot;')}">${b['Borrower ID']} — ${b['Last Name']}, ${b['First Name']} (${types})</div>`; }).join('')
     : `<div class="item" style="color:var(--muted);cursor:default;">No matches</div>`;
   box.classList.add('show');
 }
@@ -54,12 +61,19 @@ function selectPaymentBorrower(id, loanType){
 
   const amtInput = document.getElementById('paymentAmountInput');
   const isAmortized = b['Loan Type'] === 'Amortized Loan';
-  const household = (STATE?.borrowers||[]).filter(x => String(x['Household ID'] || x['Borrower ID']) === String(b['Household ID'] || b['Borrower ID']));
-  // A real Group Loan household has more than one DISTINCT borrower in it —
-  // this borrower's own Bonus Loan row (same Borrower ID, no real household)
-  // must never be mistaken for one, or it'd wrongly open the ATM-split screen
-  // for a solo borrower's own two loans.
-  const isGroup = !isBonusLoanType(b['Loan Type']) && new Set(household.map(x => String(x['Borrower ID']))).size > 1;
+  const isOpen = x => !x['Renewed To'] && x.status !== 'Paid' && x.status !== 'Renewed';
+  const household = (STATE?.borrowers||[]).filter(x => isOpen(x) && String(x['Household ID'] || x['Borrower ID']) === String(b['Household ID'] || b['Borrower ID']));
+  // Two situations open the same split-payment screen: a real Group Loan
+  // household (several people), or one person who simply has more than one
+  // open loan on their own account (e.g. Amortized + Regular, or + Bonus).
+  // Either way, one payment needs to be divided across more than one loan.
+  const isRealHousehold = new Set(household.map(x => String(x['Borrower ID']))).size > 1;
+  const isGroup = household.length > 1;
+
+  document.getElementById('groupPaymentTitle').textContent = isRealHousehold ? 'Group Loan Payment' : 'Multiple Loan Payment';
+  document.getElementById('groupPaymentSubtitle').textContent = isRealHousehold
+    ? 'This borrower is part of a household. One payment splits across every per-cutoff loan in the group — main borrower is covered first if the amount paid is short.'
+    : 'This borrower has more than one loan on this account. One payment splits across all of them, in order, before anything goes to a Bonus Loan that is not yet due.';
 
   document.getElementById('paymentAmountLabel').style.display = (isAmortized || isGroup) ? 'none' : '';
   document.getElementById('amortizedSplitWrap').style.display = (isAmortized && !isGroup) ? '' : 'none';
@@ -281,6 +295,7 @@ async function submitGroupPayment(btn){
 
 function showGroupReceipt(out){
   const companyName = (STATE?.settings && STATE.settings.CompanyName) || "Manalo's Lending Corporation Inc.";
+  const isRealHousehold = new Set((out.allocations||[]).map(a => String(a.borrowerId))).size > 1;
   const rows = out.allocations.filter(a => a.amount > 0).map(a => `
     <tr><td style="padding:4px 0;">${a.name} <span style="color:var(--muted);">(${a.loanType})</span></td><td style="padding:4px 0;text-align:right;">${fmt(a.amount)}</td></tr>
   `).join('');
@@ -288,7 +303,7 @@ function showGroupReceipt(out){
   document.getElementById('receiptContent').innerHTML = `
     <div style="text-align:center;border-bottom:2px solid var(--gold);padding-bottom:8px;margin-bottom:10px;">
       <div style="font-family:Arial,sans-serif;font-weight:bold;font-size:.95rem;color:var(--navy);">${companyName}</div>
-      <div style="font-family:Arial,sans-serif;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;">Official Receipt — Group Loan Payment</div>
+      <div style="font-family:Arial,sans-serif;font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px;">Official Receipt — ${isRealHousehold ? 'Group Loan Payment' : 'Multiple Loan Payment'}</div>
     </div>
     <table style="width:100%;font-family:Arial,sans-serif;font-size:.72rem;border-collapse:collapse;">
       <tr><td style="padding:3px 0;color:var(--muted);">OR No.</td><td style="padding:3px 0;text-align:right;font-weight:700;">${out.orNumber}</td></tr>
@@ -401,7 +416,7 @@ function updateAtmChangeCalc(){
   const id = document.getElementById('paymentBorrowerSelect').value;
   const loanType = document.getElementById('paymentLoanTypeHidden').value;
   const b = id ? findLoanRow(id, loanType) : null;
-  const contact = b && String(b['Contact Number'] || '').trim();
+  const contact = b && normalizePhoneDisplay(b['Contact Number']);
   // Editable in Settings → ATM Change Calculator; falls back to the default English text.
   const msgTpl = (contact ? STATE?.settings?.ATMChangeMessageTemplate : STATE?.settings?.ATMChangeNoContactTemplate)
     || (contact ? 'Send the amount {amount} to {contact}.' : 'No contact number is available for this borrower. The change is {amount}.');
