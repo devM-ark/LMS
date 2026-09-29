@@ -205,15 +205,21 @@ function updateGroupPaymentPreview(){
   const members = (STATE?.borrowers||[]).filter(x => String(x['Household ID'] || x['Borrower ID']) === String(householdId));
   const isOpen = x => !x['Renewed To'] && x.status !== 'Paid' && x.status !== 'Renewed';
   const mainFirst = (x,y) => (String(x['Borrower ID'])===String(householdId)?0:1) - (String(y['Borrower ID'])===String(householdId)?0:1);
-  const splitLoans = members.filter(x => isOpen(x) && (x['Loan Type']==='Regular Loan' || x['Loan Type']==='Amortized Loan')).sort(mainFirst);
-  const bonusLoans = members.filter(x => isOpen(x) && isBonusLoanType(x['Loan Type']) && Number(x.balance) > 0).sort(mainFirst);
+  // A Bonus Loan that's actually due joins the same due pool as the per-cutoff
+  // loans (folded into Total Amount Due, can go SHORT); one that isn't due yet
+  // stays separate, paid only from whatever's left over.
+  const dueStatuses = ['Nearly Due','Due Today','Past Due','Partially Paid'];
+  const isDueBonus = x => isBonusLoanType(x['Loan Type']) && dueStatuses.indexOf(x.status) !== -1;
+  const splitLoans = members.filter(x => isOpen(x) && (x['Loan Type']==='Regular Loan' || x['Loan Type']==='Amortized Loan' || isDueBonus(x))).sort(mainFirst);
+  const bonusLoans = members.filter(x => isOpen(x) && isBonusLoanType(x['Loan Type']) && !isDueBonus(x) && Number(x.balance) > 0).sort(mainFirst);
 
   let remaining = Number(document.getElementById('groupTotalAmountInput').value) || 0;
   let totalDue = 0;
   const line = (r, isBonus) =>
     `<div class="group-payment-row"><span>${r.name} (${r.loanType})</span><span>${fmt(r.amt)} / ${fmt(r.due)}${r.short && !isBonus ? ' <span style="color:var(--bad);font-weight:700;">SHORT</span>' : ''}</span></div>`;
   const rows = splitLoans.map(m => {
-    const due = Number(m['Amount/Cut-off']) || 0;
+    const isBonus = isBonusLoanType(m['Loan Type']);
+    const due = isBonus ? (Number(m.balance) || 0) : (Number(m['Amount/Cut-off']) || 0);
     const amt = Math.max(0, Math.min(due, remaining));
     remaining = Math.round((remaining - amt) * 100) / 100;
     totalDue += due;
@@ -232,7 +238,7 @@ function updateGroupPaymentPreview(){
         ? `<div style="margin-top:8px;font-size:.78rem;color:var(--muted);">Bonus Loan — paid only from any amount above the total due:</div>` + bonusRows.map(r => line(r, true)).join('')
         : '');
 }
-document.getElementById('groupTotalAmountInput').addEventListener('input', updateGroupPaymentPreview);
+document.getElementById('groupTotalAmountInput').addEventListener('input', () => { updateGroupPaymentPreview(); updateAtmChangeCalc(); });
 
 async function submitGroupPayment(btn){
   const msgEl = document.getElementById('paymentMsg');
@@ -354,16 +360,27 @@ function updateAtmChangeCalcVisibility(){
   }
 }
 
-/** Tiered ATM change/handling fee — verified against the company's actual
- *  rate table (not a flat ₱10-per-₱500):
+/** Tiered ATM change/handling fee. Uses the editable table from Settings →
+ *  ATM Change Calculator when configured (STATE.settings.ATMChangeFeeTiers);
+ *  otherwise falls back to the built-in default table:
  *    ₱1–500=10   ₱501–1000=15   ₱1001–1500=25   ₱1501–2000=30
  *    ₱2001–2500=40   ₱2501–3000=45   ₱3001–3500=55   …
- *  The fee alternates +5 / +10 every ₱500 bracket — this closed-form
- *  formula reproduces that table exactly and keeps extending it the same
- *  way for larger excess amounts. */
+ *  Amounts above the highest configured tier keep extending the pattern set
+ *  by the last two tiers (same peso-per-fee rate, repeating). */
 function atmChangeFee(excess){
+  if (excess <= 0) return 0;
+  const tiers = parseAtmChangeTiers(STATE?.settings?.ATMChangeFeeTiers);
+  if(tiers && tiers.length){
+    const hit = tiers.find(t => excess <= t.max);
+    if(hit) return hit.fee;
+    const last = tiers[tiers.length - 1];
+    const prev = tiers.length > 1 ? tiers[tiers.length - 2] : { max: 0, fee: 0 };
+    const stepMax = last.max - prev.max || last.max;
+    const stepFee = last.fee - prev.fee;
+    const extra = Math.ceil((excess - last.max) / stepMax);
+    return last.fee + extra * stepFee;
+  }
   const n = Math.ceil(excess / 500); // which 500-peso bracket the excess falls in
-  if (n <= 0) return 0;
   const k = Math.floor((n - 1) / 2);
   return 10 + 15 * k + (n % 2 === 0 ? 5 : 0);
 }
@@ -371,7 +388,11 @@ function atmChangeFee(excess){
 function updateAtmChangeCalc(){
   const resultEl = document.getElementById('atmChangeResult');
   const received = Number(document.getElementById('atmAmountReceivedInput').value) || 0;
-  const paid = Number(document.getElementById('paymentAmountInput').value) || 0;
+  // Group Loan Payment uses a different "amount paid" field (the shared
+  // total) than a normal single-loan payment — read whichever one is
+  // actually active, or "received" always looked like 100% excess.
+  const isGroupMode = document.getElementById('groupPaymentWrap').style.display !== 'none';
+  const paid = Number(document.getElementById(isGroupMode ? 'groupTotalAmountInput' : 'paymentAmountInput').value) || 0;
   const excess = received - paid;
   if(received <= 0 || excess <= 0){ resultEl.textContent = ''; return; }
   const charge = atmChangeFee(excess);
@@ -381,9 +402,10 @@ function updateAtmChangeCalc(){
   const loanType = document.getElementById('paymentLoanTypeHidden').value;
   const b = id ? findLoanRow(id, loanType) : null;
   const contact = b && String(b['Contact Number'] || '').trim();
-  const instruction = contact
-    ? `Send the amount ${fmt(netChange)} to ${contact}.`
-    : `No contact number is available for this borrower. The change is ${fmt(netChange)}.`;
+  // Editable in Settings → ATM Change Calculator; falls back to the default English text.
+  const msgTpl = (contact ? STATE?.settings?.ATMChangeMessageTemplate : STATE?.settings?.ATMChangeNoContactTemplate)
+    || (contact ? 'Send the amount {amount} to {contact}.' : 'No contact number is available for this borrower. The change is {amount}.');
+  const instruction = msgTpl.replace(/\{amount\}/g, fmt(netChange)).replace(/\{contact\}/g, contact || '');
 
   resultEl.innerHTML = `Change to give back: <b>${fmt(netChange)}</b> <span style="color:var(--muted);">(₱${excess.toLocaleString()} excess − ₱${charge} ATM change charge)</span><br>${instruction}`;
 }

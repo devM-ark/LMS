@@ -68,6 +68,29 @@ function isBonusLoanType(loanType){
  *  before this feature existed, which have no Loan Type to match against —
  *  harmless for the vast majority of borrowers who only ever have one loan
  *  row per ID). */
+/** Parses the editable "max excess:fee" tier list from Settings, e.g.
+ *  "500:10,1000:15,1500:25". Returns a sorted array of {max, fee}, or null
+ *  if the text is missing/unusable (caller should fall back to the default). */
+function parseAtmChangeTiers(text){
+  if(!text || !String(text).trim()) return null;
+  const tiers = String(text).split(',').map(part => {
+    const [maxStr, feeStr] = part.split(':');
+    return { max: Number(String(maxStr).trim()), fee: Number(String(feeStr).trim()) };
+  }).filter(t => Number.isFinite(t.max) && Number.isFinite(t.fee) && t.max > 0);
+  if(tiers.length < 1) return null;
+  tiers.sort((a,b) => a.max - b.max);
+  return tiers;
+}
+
+/** Display-only mirror of cutoffDaysForGroup() in LoanCalculationService.gs —
+ *  used just to LABEL the Payment Schedule dropdown ("Per Cutoff 15/30" vs
+ *  "5/20"). The actual due-date math always comes from the backend. */
+function cutoffDaysForGroupDisplay(group){
+  const g = String(group||'').trim().toLowerCase();
+  const fiveTwenty = ['tiaong','candelaria','sta. rosa','santa rosa','santa cruz'];
+  return fiveTwenty.indexOf(g) !== -1 ? '5/20' : '15/30';
+}
+
 function findLoanRow(id, loanType){
   const rows = (STATE?.borrowers||[]).filter(x => String(x['Borrower ID']) === String(id));
   if(!loanType) return rows[0];

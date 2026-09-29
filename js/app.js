@@ -188,6 +188,12 @@ function render(){
       if(rf.ReminderHour && STATE.settings.ReminderHour !== undefined && STATE.settings.ReminderHour !== '') rf.ReminderHour.value = STATE.settings.ReminderHour;
       if(rf.NearlyDueDays) rf.NearlyDueDays.value = STATE.settings.NearlyDueDays || 7;
     }
+    const af = document.getElementById('atmChangeForm');
+    if(af && document.activeElement && !af.contains(document.activeElement)){
+      if(af.ATMChangeFeeTiers) af.ATMChangeFeeTiers.value = STATE.settings.ATMChangeFeeTiers || '';
+      if(af.ATMChangeMessageTemplate) af.ATMChangeMessageTemplate.value = STATE.settings.ATMChangeMessageTemplate || '';
+      if(af.ATMChangeNoContactTemplate) af.ATMChangeNoContactTemplate.value = STATE.settings.ATMChangeNoContactTemplate || '';
+    }
   }
 
   const ltbody = document.querySelector('#loanTypesTable tbody');

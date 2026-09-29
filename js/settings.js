@@ -69,6 +69,24 @@ document.getElementById('companyForm')?.addEventListener('submit', async (e)=>{
   } finally { btn.disabled = false; }
 });
 
+document.getElementById('atmChangeForm')?.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const btn = e.target.querySelector('button[type=submit]');
+  if(btn.disabled) return;
+  btn.disabled = true;
+  const data = Object.fromEntries(new FormData(e.target));
+  const errEl = document.getElementById('atmChangeErr');
+  errEl.textContent = '';
+  try{
+    if(data.ATMChangeFeeTiers && !parseAtmChangeTiers(data.ATMChangeFeeTiers)){
+      errEl.textContent = 'Could not read that tier list — use "maxExcess:fee" pairs separated by commas, e.g. 500:10,1000:15.';
+      errEl.style.color='var(--bad)';
+      return;
+    }
+    if(await postAction('updateSettings', {data})){ errEl.textContent = 'Saved.'; errEl.style.color='var(--good)'; loadData(); }
+  } finally { btn.disabled = false; }
+});
+
 document.getElementById('loanTypeForm')?.addEventListener('submit', async (e)=>{
   e.preventDefault();
   const btn = e.target.querySelector('button[type=submit]');

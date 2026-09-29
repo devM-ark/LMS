@@ -101,20 +101,31 @@ function renderBorrowersTable(){
       </tr>`);
 
     if(isExpanded){
-      members.forEach(m => rowsHtml.push(renderBorrowerRow(m, true)));
+      // Group each borrower's own loans together (Aileen's Regular + Bonus
+      // adjacent, not interleaved with her husband's loan), main borrower's
+      // loans first. Within a borrower's own cluster, the ID repeats on every
+      // row but is only shown once — the name stays visible on every row.
+      const order = []; const seen = new Set();
+      members.forEach(m => { const k = String(m['Borrower ID']); if(!seen.has(k)){ seen.add(k); order.push(k); } });
+      order.sort((a,c) => (a===key?0:1) - (c===key?0:1));
+      order.forEach(k => {
+        members.filter(m => String(m['Borrower ID']) === k)
+          .forEach((m,i) => rowsHtml.push(renderBorrowerRow(m, true, i===0)));
+      });
     }
   });
 
   mtbody.innerHTML = rowsHtml.length ? rowsHtml.join('') : `<tr><td colspan="8" class="empty">${q ? 'No borrowers match "'+q+'"' : 'No active borrowers'}</td></tr>`;
 }
 
-function renderBorrowerRow(b, indented){
+function renderBorrowerRow(b, indented, showId){
+  if(showId === undefined) showId = true;
   const nameCell = indented
     ? `<span style="padding-left:22px;color:var(--muted);">↳ ${b['Last Name']}, ${b['First Name']}</span>`
     : `${b['Last Name']}, ${b['First Name']}`;
   return `
     <tr style="${indented ? 'background:#F7FAFB;' : ''}">
-      <td>${formatBorrowerId(b)}</td>
+      <td>${showId ? formatBorrowerId(b) : ''}</td>
       <td>${nameCell}</td>
       <td>${b['Loan Type']}</td>
       <td>${fmt(b.cutoffAmountDue)}</td>
@@ -182,14 +193,25 @@ function refreshLoanAmountField(){
   bonusWrap2.style.display = showBonus ? '' : 'none';
   bonusSel2.disabled = !showBonus;
 
-  // Payment Schedule (Cutoff vs Monthly) only applies to Regular Loan.
+  // Payment Schedule applies to Regular Loan and Amortized Loan (both use
+  // cutoff-day math). Staff pick 15/30 or 5/20 directly now — independent of
+  // Loan Group. Monthly stays exclusive to Regular Loan + Teacher group.
   const scheduleWrap = document.getElementById('paymentScheduleFieldWrap');
   const scheduleSelect = document.getElementById('borrowerPaymentScheduleSelect');
-  if(type === 'Regular Loan'){
+  const monthlyOpt = document.getElementById('borrowerPaymentScheduleMonthlyOpt');
+  const groupSel2 = document.getElementById('borrowerGroupSelect');
+  const isTeacher = groupSel2 && groupSel2.value === 'Teachers';
+  if(type === 'Regular Loan' || type === 'Amortized Loan'){
     scheduleWrap.style.display = '';
+    const monthlyOk = type === 'Regular Loan' && isTeacher;
+    monthlyOpt.disabled = !monthlyOk;
+    if(!monthlyOk && scheduleSelect.value === 'Monthly') scheduleSelect.value = '';
+    // Default to whichever cutoff days this Loan Group actually uses, but only
+    // when nothing's been chosen yet — never overwrite a staff choice.
+    if(!scheduleSelect.value) scheduleSelect.value = cutoffDaysForGroupDisplay(groupSel2 ? groupSel2.value : 'Teachers');
   } else {
     scheduleWrap.style.display = 'none';
-    scheduleSelect.value = 'Cutoff';
+    scheduleSelect.value = '';
   }
   updateCutoffAuto();
 }
