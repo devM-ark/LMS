@@ -15,7 +15,7 @@
 <div id="loginScreen">
   <div class="login-box">
     <h1>Automated Loan Monitoring System</h1>
-    <div class="tag">Manalo's Lending Company - Sign in</div>
+    <div class="tag">Manalo's Lending Company — Sign in</div>
     <div style="display:flex;gap:8px;margin:14px 0;">
       <button type="button" id="loginModeStaffBtn" class="btn small" onclick="setLoginMode('staff')" style="flex:1;">Staff Login</button>
       <button type="button" id="loginModeBorrowerBtn" class="btn small ghost" onclick="setLoginMode('borrower')" style="flex:1;">Borrower Login</button>
@@ -112,21 +112,21 @@
   <main>
     <section id="tab-home" class="active">
       <div class="note" id="setupNote" style="display:none;">
-        Not connected yet - showing sample data.
+        Not connected yet — showing sample data.
       </div>
       <div class="cards">
-        <div class="card"><div class="n" id="dOutstanding">-</div><div class="l">Total Outstanding Balance</div></div>
-		<div class="card"><div class="n" id="dCollected">-</div><div class="l">Total Collected</div></div>
-		<div class="card"><div class="n" id="dUnpaid">-</div><div class="l">Total Unpaid</div></div>
+        <div class="card"><div class="n" id="dOutstanding">—</div><div class="l">Total Outstanding Balance</div></div>
+		<div class="card"><div class="n" id="dCollected">—</div><div class="l">Total Collected</div></div>
+		<div class="card"><div class="n" id="dUnpaid">—</div><div class="l">Total Unpaid</div></div>
 
-        <div class="card"><div class="n" id="dMonthCollectible">-</div><div class="l" id="dMonthCollectibleLabel">Total Collectibles This Month</div></div>
-		<div class="card"><div class="n" id="dMonthCollected">-</div><div class="l" id="dMonthCollectedLabel">Total Collected This Month</div></div>
-		<div class="card"><div class="n" id="dMonthUnpaid">-</div><div class="l" id="dMonthUnpaidLabel">Total Unpaid This Month</div></div>
+        <div class="card"><div class="n" id="dMonthCollectible">—</div><div class="l" id="dMonthCollectibleLabel">Total Collectibles This Month</div></div>
+		<div class="card"><div class="n" id="dMonthCollected">—</div><div class="l" id="dMonthCollectedLabel">Total Collected This Month</div></div>
+		<div class="card"><div class="n" id="dMonthUnpaid">—</div><div class="l" id="dMonthUnpaidLabel">Total Unpaid This Month</div></div>
 		
-        <div class="card card-clickable" onclick="focusActiveBorrowers()"><div class="n" id="dActive">-</div><div class="l">Active Loans</div></div>  
-        <div class="card card-clickable" onclick="showNearlyDueModal()"><div class="n" id="dNearlyDue">-</div><div class="l">Nearly Due</div></div>
-        <div class="card card-clickable" onclick="showPastDueModal()"><div class="n" id="dPastDue">-</div><div class="l">Past Due</div></div>
-        <div class="card card-clickable" onclick="showEligibleRenewalModal()"><div class="n" id="dEligibleRenewal">-</div><div class="l">Eligible for Renewal</div></div>
+        <div class="card card-clickable" onclick="focusActiveBorrowers()"><div class="n" id="dActive">—</div><div class="l">Active Loans</div></div>  
+        <div class="card card-clickable" onclick="showNearlyDueModal()"><div class="n" id="dNearlyDue">—</div><div class="l">Nearly Due</div></div>
+        <div class="card card-clickable" onclick="showPastDueModal()"><div class="n" id="dPastDue">—</div><div class="l">Past Due</div></div>
+        <div class="card card-clickable" onclick="showEligibleRenewalModal()"><div class="n" id="dEligibleRenewal">—</div><div class="l">Eligible for Renewal</div></div>
       </div>
       <h2 class="section-title" id="activeBorrowersSection">Active Borrowers</h2>
       <input type="text" id="borrowerSearchInput" placeholder="Search by name or ID…" style="width:100%;font-family:Arial,sans-serif;padding:10px 12px;border:1px solid var(--line);border-radius:4px;font-size:.9rem;margin-bottom:10px;background:#fff;">
@@ -178,7 +178,7 @@
       <div class="reports-grid">
         <div class="reports-col-header">Summary of Borrowers</div>
         <div class="reports-col-header">Summary of Collections</div>
-        <label class="stack-label rf-group">Cutoff Schedule
+        <label class="stack-label rf-group">Group
           <select name="Group" form="reportFilterForm" id="reportGroupSelect">
             <option value="Teachers">Teachers</option>
             <option value="Tiaong">Tiaong</option>
@@ -221,7 +221,7 @@
               <col style="width:10%"><col style="width:12%">
             </colgroup>
             <thead><tr>
-              <th>Borrower ID</th><th>Full Name</th><th>Loan Type</th><th>Loan Amount</th>
+              <th>ID</th><th>Full Name</th><th>Loan Type</th><th>Loan Amount</th>
               <th>Released Date</th><th>Maturity Date</th><th>Paid Amount</th>
               <th>Amount Per Cutoff</th><th>Remaining Balance</th><th>Remarks</th>
             </tr></thead>
@@ -286,11 +286,11 @@
       <div class="note">
         Sends a daily summary email listing borrowers who are Due Today, Nearly Due, Past Due, or Eligible for Renewal.
         <br><b>Important:</b> saving here only stores your settings. Google does not allow the web app to schedule
-        itself - you must also open the Apps Script editor, select <b>setupReminderTrigger</b> from the function
+        itself — you must also open the Apps Script editor, select <b>setupReminderTrigger</b> from the function
         dropdown, and click <b>Run</b>. Do this once now, and again any time you change the send time.
       </div>
       <form class="stack" id="reminderForm">
-        <label>Recipient Email(s) - comma-separated for more than one<input name="ReminderEmail" type="text" placeholder="you@example.com"></label>
+        <label>Recipient Email(s) — comma-separated for more than one<input name="ReminderEmail" type="text" placeholder="you@example.com"></label>
         <label>Send Time (daily)
           <select name="ReminderHour">
             <option value="6">6:00 AM</option>
@@ -311,7 +311,7 @@
       <h2 class="section-title">Company</h2>
       <form class="stack" id="companyForm">
         <label>Company Name<input name="CompanyName"></label>
-        <label>Logo URL<input name="LogoUrl" placeholder="https://... (hosted image link)"></label>
+        <label>Logo URL<input name="LogoUrl" placeholder=" "></label>
         <div class="note">Just paste the direct image link here.</div>
         <button class="btn gold" type="submit">Save Company Settings</button>
         <div class="err" id="companyErr"></div>
@@ -319,14 +319,14 @@
 
       <h2 class="section-title">ATM Change Calculator</h2>
       <form class="stack" id="atmChangeForm">
-        <label>Fee Tiers - format "max excess:fee", comma-separated, in ascending order
+        <label>Fee Tiers — format "max excess:fee", comma-separated, in ascending order
           <textarea name="ATMChangeFeeTiers" id="atmChangeFeeTiersInput" rows="2" placeholder="500:10,1000:15,1500:25,2000:30,2500:40,3000:45,3500:55"></textarea>
         </label>
         <div class="note">Example: "500:10" means an excess up to ₱500 costs a ₱10 fee. Amounts above the highest tier listed here keep extending the pattern set by the last two tiers. Leave blank to use the built-in default table.</div>
-        <label>Message shown to staff when a contact number IS on file - {amount} and {contact} are replaced automatically
+        <label>Message shown to staff when a contact number IS on file — {amount} and {contact} are replaced automatically
           <input name="ATMChangeMessageTemplate" id="atmChangeMessageInput" placeholder="Send the amount {amount} to {contact}.">
         </label>
-        <label>Message shown when NO contact number is on file - {amount} is replaced automatically
+        <label>Message shown when NO contact number is on file — {amount} is replaced automatically
           <input name="ATMChangeNoContactTemplate" id="atmChangeNoContactInput" placeholder="No contact number is available for this borrower. The change is {amount}.">
         </label>
         <button class="btn gold" type="submit">Save ATM Change Settings</button>
@@ -364,7 +364,7 @@
 
       <h2 class="section-title">Bulk Data Import</h2>
       <div class="note">
-        For backfilling old loans and payments that predate this system. Download the current data first - it doubles as the exact template for your import file, so column names always line up.
+        For backfilling old loans and payments that predate this system. Download the current data first — it doubles as the exact template for your import file, so column names always line up.
       </div>
 
       <div class="bulk-import-grid">
@@ -432,8 +432,8 @@
       <label style="grid-column:1/-1;">Loan Category
         <select id="loanCategoryUISelect">
           <option value="Individual">Individual</option>
-          <option value="Group-Main">Group Loan - Main Borrower</option>
-          <option value="Group-Co">Group Loan - Ride On</option>
+          <option value="Group-Main">Group Loan — Main Borrower</option>
+          <option value="Group-Co">Group Loan — Ride On</option>
           <option value="Existing-Account">Add Another Loan to an Existing Account</option>
         </select>
       </label>
@@ -453,8 +453,8 @@
       </div>
       <label id="bonusPeriodFieldWrap" style="grid-column:1/-1;display:none;">Bonus Period
         <select name="Bonus Period" id="bonusPeriodSelect">
-          <option value="Mid-Year">Mid-Year Bonus - automatically due end of May</option>
-          <option value="Year-End">Year-End Bonus - automatically due end of November</option>
+          <option value="Mid-Year">Mid-Year Bonus — automatically due end of May</option>
+          <option value="Year-End">Year-End Bonus — automatically due end of November</option>
         </select>
       </label>
       <input type="hidden" name="Loan Category" id="loanCategoryHidden" value="Individual">
@@ -481,7 +481,7 @@
         <select name="Payment Schedule" id="borrowerPaymentScheduleSelect">
           <option value="15/30">Per Cutoff 15/30</option>
           <option value="5/20">Per Cutoff 5/20</option>
-          <option value="Monthly" id="borrowerPaymentScheduleMonthlyOpt">Monthly</option>
+          <option value="Monthly" id="borrowerPaymentScheduleMonthlyOpt">Monthly (Teacher, Regular Loan only)</option>
         </select>
       </label>
       <label>Term (Months) (auto)<input name="Term (Months)" id="borrowerTermInput" type="number" readonly style="background:#EEF3F5;"></label>
@@ -491,8 +491,8 @@
       <label class="acct-field">Address<input name="Address"></label>
       <label class="acct-field">With ATM Card? (card surrendered)
         <select name="ATMOption" id="borrowerAtmOptionSelect">
-          <option value="Yes">Yes</option>
           <option value="No">No</option>
+          <option value="Yes">Yes</option>
         </select>
       </label>
       <button class="btn gold" type="submit">Add Borrower</button>
@@ -524,7 +524,7 @@
       </div>
       <div id="groupPaymentWrap" style="grid-column:1/-1;display:none;background:var(--tint);border-radius:6px;padding:12px 14px;">
         <div style="font-weight:700;font-size:.78rem;color:var(--navy);margin-bottom:6px;" id="groupPaymentTitle">Group Loan Payment</div>
-        <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;" id="groupPaymentSubtitle">This borrower is part of a household. One payment splits across every per-cutoff loan in the group - main borrower is covered first if the amount paid is short.</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px;" id="groupPaymentSubtitle">This borrower is part of a household. One payment splits across every per-cutoff loan in the group — main borrower is covered first if the amount paid is short.</div>
         <label style="margin-bottom:0;">Total Amount Paid<input type="number" id="groupTotalAmountInput"></label>
         <div id="groupPaymentPreview" style="margin-top:10px;font-size:.85rem;"></div>
       </div>
@@ -703,14 +703,14 @@
   </div>
 </div>
 
-<script src="js/utilities.js?v=20261004"></script>
-<script src="js/api.js?v=20261004"></script>
-<script src="js/navigation.js?v=20261004"></script>
-<script src="js/borrowers.js?v=20261004"></script>
-<script src="js/payments.js?v=20261004"></script>
-<script src="js/reports.js?v=20261004"></script>
-<script src="js/settings.js?v=20261004"></script>
-<script src="js/borrower-portal.js?v=20261004"></script>
-<script src="js/app.js?v=20261004"></script>
+<script src="js/utilities.js?v=20261005"></script>
+<script src="js/api.js?v=20261005"></script>
+<script src="js/navigation.js?v=20261005"></script>
+<script src="js/borrowers.js?v=20261005"></script>
+<script src="js/payments.js?v=20261005"></script>
+<script src="js/reports.js?v=20261005"></script>
+<script src="js/settings.js?v=20261005"></script>
+<script src="js/borrower-portal.js?v=20261005"></script>
+<script src="js/app.js?v=20261005"></script>
 </body>
 </html>

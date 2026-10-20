@@ -105,14 +105,14 @@ function renderBorrowersTable(){
     if(isExpanded){
       // Group each borrower's own loans together (Aileen's Regular + Bonus
       // adjacent, not interleaved with her husband's loan), main borrower's
-      // loans first. Within a borrower's own cluster, the ID repeats on every
-      // row but is only shown once — the name stays visible on every row.
+      // loans first. The ID is shown only on the summary row above — never on the
+      // loan rows underneath (including Ride Ons) — the name stays on every row.
       const order = []; const seen = new Set();
       members.forEach(m => { const k = String(m['Borrower ID']); if(!seen.has(k)){ seen.add(k); order.push(k); } });
       order.sort((a,c) => (a===key?0:1) - (c===key?0:1));
       order.forEach(k => {
         members.filter(m => String(m['Borrower ID']) === k)
-          .forEach((m,i) => rowsHtml.push(renderBorrowerRow(m, true, i===0)));
+          .forEach(m => rowsHtml.push(renderBorrowerRow(m, true, false)));
       });
     }
   });

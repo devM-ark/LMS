@@ -16,26 +16,47 @@ document.getElementById('reportFilterForm')?.addEventListener('submit', (e)=>{
   const group = document.getElementById('reportGroupSelect').value;
   const statusFilter = document.getElementById('reportStatusSelect').value;
   const all = STATE?.borrowers || [];
-  const borrowers = all.filter(b => {
+  const rows = all.filter(b => {
     const bGroup = String(b['Group']||'Teachers').trim().toLowerCase();
     const matchesGroup = bGroup === group.toLowerCase();
     const matchesStatus = statusFilter === 'paid' ? (b.status === 'Paid' || b.status === 'Renewed') : (b.status !== 'Paid' && b.status !== 'Renewed');
     return matchesGroup && matchesStatus;
-  }).sort((a,b) => {
-    const an = `${a['Last Name']||''} ${a['First Name']||''}`.trim().toLowerCase();
-    const bn = `${b['Last Name']||''} ${b['First Name']||''}`.trim().toLowerCase();
-    return an.localeCompare(bn);
   });
 
-  document.getElementById('reportCompanyName').textContent = (STATE?.settings && STATE.settings.CompanyName) || "Manalo's Lending Corporation";
+  // Keep every household together: the main borrower first, then each Ride On
+  // right under them, and one person's several loans side by side. The ID is
+  // printed once per household (on its first row) so Ride Ons are easy to tell apart.
+  const loanOrder = t => isBonusLoanType(t) ? 3 : ({'Regular Loan':0,'Amortized Loan':1,'Add-on Diminishing':2}[t] ?? 2);
+  const nameOf = b => `${b['Last Name']||''} ${b['First Name']||''}`.trim().toLowerCase();
+  const households = new Map();
+  rows.forEach(b => {
+    const k = String(b['Household ID'] || b['Borrower ID']);
+    if(!households.has(k)) households.set(k, []);
+    households.get(k).push(b);
+  });
+  const ordered = [...households.entries()].map(([k, members]) => {
+    const persons = [...new Set(members.map(m => String(m['Borrower ID'])))];
+    persons.sort((x, y) => (x===k?0:1) - (y===k?0:1) || Number(x) - Number(y));
+    const list = [];
+    persons.forEach(pid => members.filter(m => String(m['Borrower ID']) === pid)
+      .sort((m1, m2) => loanOrder(m1['Loan Type']) - loanOrder(m2['Loan Type']))
+      .forEach(m => list.push(m)));
+    return { sortName: nameOf(list[0]), mainId: k, list };
+  }).sort((x, y) => x.sortName.localeCompare(y.sortName));
+
+  const company = ((STATE?.settings && STATE.settings.CompanyName) || "Manalo's Lending Corporation").toUpperCase();
+  document.getElementById('reportCompanyName').textContent = `${company} - ${group.toUpperCase()}`;
   document.getElementById('reportSubtitle').textContent =
-    `Summary of Borrowers — ${group} — ${statusFilter==='paid'?'Paid':'Active'} Loans — Generated ${fmtDate(new Date().toISOString().slice(0,10))}`;
+    `Summary of ${statusFilter==='paid'?'Paid':'Active'} Loans | Generated on ${fmtDate(new Date().toISOString().slice(0,10))}`;
 
   const tbody = document.querySelector('#reportTable tbody');
-  tbody.innerHTML = borrowers.length ? borrowers.map(b => `
+  const out = [];
+  ordered.forEach(h => h.list.forEach((b, i) => {
+    const isRideOn = b['Household ID'] && String(b['Household ID']) !== String(b['Borrower ID']);
+    out.push(`
     <tr>
-      <td>${b['Borrower ID']}</td>
-      <td>${b['Last Name']}, ${b['First Name']}</td>
+      <td>${i === 0 ? formatBorrowerId(b) : ''}</td>
+      <td${isRideOn ? ' style="padding-left:14px;"' : ''}>${b['Last Name']}, ${b['First Name']}</td>
       <td>${b['Loan Type']}</td>
       <td>${fmt(b['Loan Amount'])}</td>
       <td>${fmtDate(b['Release Date'])}</td>
@@ -44,7 +65,9 @@ document.getElementById('reportFilterForm')?.addEventListener('submit', (e)=>{
       <td>${b['Amount/Cut-off'] ? fmt(b['Amount/Cut-off']) : '–'}</td>
       <td>${fmt(b.balance)}</td>
       <td>${reportRemarks(b)}</td>
-    </tr>`).join('') : `<tr><td colspan="10" class="empty">No matching borrowers</td></tr>`;
+    </tr>`);
+  }));
+  tbody.innerHTML = out.length ? out.join('') : `<tr><td colspan="10" class="empty">No matching borrowers</td></tr>`;
 
   document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open'));
   document.getElementById('collectionsOutput')?.classList.remove('open');
