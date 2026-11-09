@@ -27,11 +27,37 @@ const SAMPLE = {
 };
 
 
+// Set to true to bring back the "Borrower Login" button and portal on the sign-in screen.
+const BORROWER_PORTAL_ENABLED = false;
+
 // ---------- Actions ----------
+// These can be done with no internet — they're saved on the device and sent
+// when the connection returns (see offline.js). Everything else needs to be online.
+const QUEUEABLE_ACTIONS = ['addPayment', 'addGroupPayment', 'addBorrower', 'updateBorrower'];
+let _clientSeq = 0;
+function newClientId(){ return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8) + (++_clientSeq); }
+
 async function postAction(action, extra){
   if(!API_URL){ alert('Please setup the API URL web link!'); return null; }
-  const res = await fetch(API_URL, {method:'POST', body: JSON.stringify({action, username: SESSION?.username, ...extra})});
-  const out = await res.json();
-  if(out.error){ alert('Error: '+out.error); return null; }
+  const queueable = QUEUEABLE_ACTIONS.indexOf(action) !== -1;
+  const payload = {action, username: SESSION?.username, ...extra};
+  if(queueable){ payload.clientId = newClientId(); OFFLINE.prepare(action, payload); }
+  let out;
+  try{
+    const res = await fetchWithTimeout(API_URL, {method:'POST', body: JSON.stringify(payload)}, queueable ? 30000 : 60000);
+    out = await res.json();
+  }catch(netErr){
+    // No connection (or the reply got lost). The same entry ID is re-sent later,
+    // and the server ignores it if it was in fact already recorded.
+    if(queueable) return OFFLINE.enqueue(action, payload);
+    alert(navigator.onLine === false
+      ? 'This action needs an internet connection. Please connect and try again.'
+      : 'Could not reach the server. Please check your connection and try again.');
+    return null;
+  }
+  if(out.error){
+    if(queueable && out.retry) return OFFLINE.enqueue(action, payload);
+    alert('Error: '+out.error); return null;
+  }
   return out;
 }

@@ -163,6 +163,13 @@ function showReceipt(payment, borrower){
   openModal('receiptModal');
 }
 
+/** Receipt for a payment that was entered offline and hasn't synced yet. */
+function showPendingReceipt(orNumber, borrowerId){
+  const payment = (STATE?.payments||[]).find(p => p._pending && p['OR / Reference No.'] === orNumber && String(p['Borrower ID']) === String(borrowerId));
+  if(!payment){ alert('Payment not found.'); return; }
+  showReceipt(payment, findLoanRow(payment['Borrower ID'], payment['Loan Type']));
+}
+
 function showReceiptForRow(rowNum){
   const payment = (STATE?.payments||[]).find(p => p._row === rowNum);
   if(!payment){ alert('Payment not found.'); return; }
@@ -192,7 +199,7 @@ document.getElementById('paymentForm').addEventListener('submit', async (e)=>{
   try{
     const out = await postAction('addPayment', {data});
     if(out){
-      showToast('Payment recorded successfully.');
+      showToast(out.queued ? SAVED_OFFLINE_MSG : 'Payment recorded successfully.');
       e.target.reset();
       document.getElementById('paymentBorrowerName').value = '';
       document.getElementById('paymentAmountInput').placeholder = '';
@@ -209,13 +216,12 @@ document.getElementById('paymentForm').addEventListener('submit', async (e)=>{
 /** Live preview of how a group payment would be allocated — main borrower
  *  covered first, matches the same priority rule addGroupPayment applies
  *  server-side, so staff see exactly what will happen before submitting. */
-function updateGroupPaymentPreview(){
-  const previewEl = document.getElementById('groupPaymentPreview');
-  const id = document.getElementById('paymentBorrowerSelect').value;
-  const loanType = document.getElementById('paymentLoanTypeHidden').value;
-  const b = findLoanRow(id, loanType);
-  if(!b){ previewEl.innerHTML = ''; return; }
-  const householdId = b['Household ID'] || b['Borrower ID'];
+/** Splits one payment across a household's (or one person's several) loans.
+ *  Mirrors addGroupPayment() on the server, so the preview, the offline
+ *  receipt and what actually gets recorded all follow the same rule.
+ *  Returns every allocation in order: due loans first (main borrower first),
+ *  then any not-yet-due Bonus Loan, which only receives what's left over. */
+function computeGroupAllocations(householdId, totalAmount){
   const members = (STATE?.borrowers||[]).filter(x => String(x['Household ID'] || x['Borrower ID']) === String(householdId));
   const isOpen = x => !x['Renewed To'] && x.status !== 'Paid' && x.status !== 'Renewed';
   const mainFirst = (x,y) => (String(x['Borrower ID'])===String(householdId)?0:1) - (String(y['Borrower ID'])===String(householdId)?0:1);
@@ -227,27 +233,41 @@ function updateGroupPaymentPreview(){
   const splitLoans = members.filter(x => isOpen(x) && (x['Loan Type']==='Regular Loan' || x['Loan Type']==='Amortized Loan' || isDueBonus(x))).sort(mainFirst);
   const bonusLoans = members.filter(x => isOpen(x) && isBonusLoanType(x['Loan Type']) && !isDueBonus(x) && Number(x.balance) > 0).sort(mainFirst);
 
-  let remaining = Number(document.getElementById('groupTotalAmountInput').value) || 0;
+  let remaining = Math.round((Number(totalAmount) || 0) * 100) / 100;
   let totalDue = 0;
-  const line = (r, isBonus) =>
-    `<div class="group-payment-row"><span>${r.name} (${r.loanType})</span><span>${fmt(r.amt)} / ${fmt(r.due)}${r.short && !isBonus ? ' <span style="color:var(--bad);font-weight:700;">SHORT</span>' : ''}</span></div>`;
-  const rows = splitLoans.map(m => {
+  const allocations = [];
+  splitLoans.forEach(m => {
     const isBonus = isBonusLoanType(m['Loan Type']);
     const due = isBonus ? (Number(m.balance) || 0) : (Number(m['Amount/Cut-off']) || 0);
-    const amt = Math.max(0, Math.min(due, remaining));
-    remaining = Math.round((remaining - amt) * 100) / 100;
+    const amount = Math.max(0, Math.min(due, remaining));
+    remaining = Math.round((remaining - amount) * 100) / 100;
     totalDue += due;
-    return { name: `${m['Last Name']}, ${m['First Name']}`, loanType: m['Loan Type'], due, amt, short: amt < due };
+    allocations.push({ borrowerId: m['Borrower ID'], name: `${m['Last Name']}, ${m['First Name']}`, loanType: m['Loan Type'], due, amount, short: amount < due, isBonus });
   });
-  const bonusRows = bonusLoans.map(m => {
+  bonusLoans.forEach(m => {
     const due = Number(m.balance) || 0;
-    const amt = Math.max(0, Math.min(due, remaining));
-    remaining = Math.round((remaining - amt) * 100) / 100;
-    return { name: `${m['Last Name']}, ${m['First Name']}`, loanType: m['Loan Type'], due, amt, short: false };
+    const amount = Math.max(0, Math.min(due, remaining));
+    remaining = Math.round((remaining - amount) * 100) / 100;
+    allocations.push({ borrowerId: m['Borrower ID'], name: `${m['Last Name']}, ${m['First Name']}`, loanType: m['Loan Type'], due, amount, short: false, isBonus: true, notYetDue: true });
   });
+  return { allocations, totalDue, shortfall: allocations.some(a => a.short) };
+}
 
+/** Live preview of how a group / multiple-loan payment would be allocated. */
+function updateGroupPaymentPreview(){
+  const previewEl = document.getElementById('groupPaymentPreview');
+  const id = document.getElementById('paymentBorrowerSelect').value;
+  const loanType = document.getElementById('paymentLoanTypeHidden').value;
+  const b = findLoanRow(id, loanType);
+  if(!b){ previewEl.innerHTML = ''; return; }
+  const householdId = b['Household ID'] || b['Borrower ID'];
+  const g = computeGroupAllocations(householdId, Number(document.getElementById('groupTotalAmountInput').value) || 0);
+  const rows = g.allocations.filter(a => !a.notYetDue);
+  const bonusRows = g.allocations.filter(a => a.notYetDue);
+  const line = (r, isBonus) =>
+    `<div class="group-payment-row"><span>${r.name} (${r.loanType})</span><span>${fmt(r.amount)} / ${fmt(r.due)}${r.short && !isBonus ? ' <span style="color:var(--bad);font-weight:700;">SHORT</span>' : ''}</span></div>`;
   previewEl.innerHTML = rows.map(r => line(r, false)).join('')
-    + `<div class="group-payment-row" style="font-weight:700;border-top:2px solid var(--line);"><span style="color:inherit;">Total Amount Due</span><span>${fmt(totalDue)}</span></div>`
+    + `<div class="group-payment-row" style="font-weight:700;border-top:2px solid var(--line);"><span style="color:inherit;">Total Amount Due</span><span>${fmt(g.totalDue)}</span></div>`
     + (bonusRows.length
         ? `<div style="margin-top:8px;font-size:.78rem;color:var(--muted);">Bonus Loan — paid only from any amount above the total due:</div>` + bonusRows.map(r => line(r, true)).join('')
         : '');
@@ -277,7 +297,7 @@ async function submitGroupPayment(btn){
       receivedBy: document.getElementById('paymentReceivedByInput').value
     });
     if(out && out.success){
-      showToast(out.shortfall ? 'Payment recorded — some loans were short.' : 'Payment recorded successfully.');
+      showToast(out.queued ? SAVED_OFFLINE_MSG : (out.shortfall ? 'Payment recorded — some loans were short.' : 'Payment recorded successfully.'));
       document.getElementById('paymentForm').reset();
       document.getElementById('paymentBorrowerName').value = '';
       document.getElementById('groupPaymentWrap').style.display = 'none';
@@ -469,10 +489,10 @@ function renderPaymentsTable(){
       <td>${p['OR / Reference No.']}</td>
       <td>${fmt(p['Amount Paid'])}</td>
       <td>${p['Mode of Payment']}</td>
-      <td>${p.Status==='VOID' ? '<span class="status-pill status-Past-Due">VOID</span>' : `<span class="status-pill status-Active">${p.Status || 'Payment Success'}</span>`}</td>
-      <td class="no-print"><button class="btn small ghost" onclick="showReceiptForRow(${p._row})">View</button></td>
+      <td>${p._pending ? '<span class="status-pill status-Nearly-Due">Pending sync</span>' : (p.Status==='VOID' ? '<span class="status-pill status-Past-Due">VOID</span>' : `<span class="status-pill status-Active">${p.Status || 'Payment Success'}</span>`)}</td>
+      <td class="no-print"><button class="btn small ghost" onclick="${p._pending ? `showPendingReceipt('${p['OR / Reference No.']}', ${p['Borrower ID']})` : `showReceiptForRow(${p._row})`}">View</button></td>
       <td class="no-print admin-only" style="display:${isAdmin()?'':'none'}">
-        ${p.Status==='VOID' ? '' : `<button class="btn small danger" onclick="voidPayment(${p._row})">Void</button>`}
+        ${(p.Status==='VOID' || p._pending) ? '' : `<button class="btn small danger" onclick="voidPayment(${p._row})">Void</button>`}
       </td>
     </tr>`).join('') : `<tr><td colspan="8" class="empty">${q ? 'No payments match "'+q+'"' : 'No payments yet'}</td></tr>`;
 }

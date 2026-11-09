@@ -41,16 +41,18 @@ document.getElementById('loginForm').addEventListener('submit', async (e)=>{
     const out = await res.json();
     if(out.error){ errEl.textContent = out.error; return; }
     SESSION = out;
-    sessionStorage.setItem('lm_session', JSON.stringify(out));
+    localStorage.setItem('lm_session', JSON.stringify(out));
     e.target.reset();
     enterApp();
-  }catch(err){ errEl.textContent = 'Could not reach the server.'; }
+  }catch(err){ errEl.textContent = navigator.onLine === false ? 'You are offline. Sign in once while online — after that, the app opens offline.' : 'Could not reach the server.'; }
   finally { btn.disabled = false; }
 });
 
 document.getElementById('logoutBtn').addEventListener('click', ()=>{
+  const pending = OFFLINE.pendingCount();
+  if(pending && !confirm(`${pending} saved ${pending===1?'entry has':'entries have'} not synced yet. They stay saved on this device and will sync the next time you sign in while online. Sign out anyway?`)) return;
   SESSION = null;
-  sessionStorage.removeItem('lm_session');
+  localStorage.removeItem('lm_session'); sessionStorage.removeItem('lm_session');
   document.getElementById('mainApp').style.display='none';
   document.getElementById('tabbar').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
@@ -85,11 +87,11 @@ document.getElementById('accountForm').addEventListener('submit', async (e)=>{
     const out = await res.json();
     if(out.error){ errEl.textContent = out.error; return; }
     SESSION = out;
-    sessionStorage.setItem('lm_session', JSON.stringify(out));
+    localStorage.setItem('lm_session', JSON.stringify(out));
     document.getElementById('whoamiText').innerHTML = '<svg viewBox="0 0 24 24"><path d="m12,0C5.383,0,0,5.383,0,12s5.383,12,12,12,12-5.383,12-12S18.617,0,12,0Zm-4,21.164v-.164c0-2.206,1.794-4,4-4s4,1.794,4,4v.164c-1.226.537-2.578.836-4,.836s-2.774-.299-4-.836Zm9.925-1.113c-.456-2.859-2.939-5.051-5.925-5.051s-5.468,2.192-5.925,5.051c-2.47-1.823-4.075-4.753-4.075-8.051C2,6.486,6.486,2,12,2s10,4.486,10,10c0,3.298-1.605,6.228-4.075,8.051Zm-5.925-15.051c-2.206,0-4,1.794-4,4s1.794,4,4,4,4-1.794,4-4-1.794-4-4-4Zm0,6c-1.103,0-2-.897-2-2s.897-2,2-2,2,.897,2,2-.897,2-2,2Z"/></svg><span>'+SESSION.name+' · '+SESSION.role+'</span>';
     closeModal('accountModal');
     showToast('Account updated successfully.');
-  } catch(err){ errEl.textContent = 'Could not reach the server.'; }
+  } catch(err){ errEl.textContent = navigator.onLine === false ? 'You are offline. Sign in once while online — after that, the app opens offline.' : 'Could not reach the server.'; }
   finally { btn.disabled = false; }
 });
 
@@ -118,8 +120,8 @@ function enterApp(){
   });
 }
 
-// restore session on reload (same tab only)
-const saved = sessionStorage.getItem('lm_session');
+// restore session on reload — kept on this device so the installed app opens straight in, even offline
+const saved = localStorage.getItem('lm_session') || sessionStorage.getItem('lm_session');
 if(saved){ SESSION = JSON.parse(saved); enterApp(); }
 
 // ---------- Data ----------
@@ -130,19 +132,34 @@ async function loadData(){
     syncEl.textContent = 'Demo mode (sample data)';
     STATE = SAMPLE; render(); return;
   }
+  await OFFLINE.ready;
+  // Send anything saved while offline first, so the data we download next already includes it.
+  if(navigator.onLine !== false) await OFFLINE.sync();
   try{
     syncEl.textContent = 'Syncing…';
-    const res = await fetch(API_URL + '?action=all');
-    STATE = await res.json();
+    const res = await fetchWithTimeout(API_URL + '?action=all', {}, 30000);
+    const data = await res.json();
+    if(!data || !Array.isArray(data.borrowers)) throw new Error((data && data.error) || 'Bad response');
+    STATE = data;
+    OFFLINE.saveSnapshot(STATE);   // copy for offline use (taken before pending entries are layered on)
+    OFFLINE.applyOverlay(STATE);   // entries still waiting to sync stay visible, marked pending
     syncEl.textContent = 'Synced ' + new Date().toLocaleTimeString();
     syncEl.className = 'sync';
     render();
   }catch(err){
-    syncEl.textContent = 'Sync failed — showing last known data';
+    if(!STATE || STATE === SAMPLE){
+      const snap = await OFFLINE.loadSnapshot();
+      STATE = snap ? snap.data : {borrowers:[], payments:[], loanTypes:[], settings:{}};
+      OFFLINE.applyOverlay(STATE);
+    }
+    const t = OFFLINE.snapshotTime();
+    syncEl.textContent = navigator.onLine === false
+      ? 'Offline — data as of ' + (t ? new Date(t).toLocaleString() : 'last sync')
+      : 'Sync failed — showing last known data';
     syncEl.className = 'sync err';
-    if(!STATE) STATE = SAMPLE;
     render();
   }
+  OFFLINE.renderBar();
 }
 
 function render(){

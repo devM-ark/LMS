@@ -173,3 +173,13 @@ header.top.borrower-header .whoami{display:flex;align-items:center;gap:10px;flex
 .abc-card .abc-ride{margin-top:4px;padding-top:4px;border-top:1px dashed var(--line);font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;}
 .abc-card .abc-ride b{display:block;font-size:.85rem;color:var(--navy);letter-spacing:0;}
 @media (max-width:700px){.abc-grid{grid-template-columns:1fr 1fr;}}
+
+/* Offline / install */
+.offline-bar{padding:8px 14px;font-family:Arial,sans-serif;font-size:.78rem;font-weight:600;text-align:center;background:#EEF3F5;color:var(--ink);border-bottom:1px solid var(--line);}
+.offline-bar.offline{background:#FFF4D6;color:#7A5A00;}
+.offline-bar.pending{background:#E3F1F8;color:var(--navy);}
+.offline-bar.failed{background:#F8DADA;color:#8A1F1F;}
+.pending-tag{display:inline-block;margin-left:6px;padding:1px 6px;border-radius:8px;background:#FFF4D6;color:#7A5A00;font-size:.62rem;font-weight:700;vertical-align:middle;}
+.sync-item{border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin-bottom:8px;background:#fff;}
+.sync-item.failed{border-color:#E7B4B4;}
+@media print{.offline-bar{display:none !important;}}

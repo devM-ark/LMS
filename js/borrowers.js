@@ -122,9 +122,10 @@ function renderBorrowersTable(){
 
 function renderBorrowerRow(b, indented, showId){
   if(showId === undefined) showId = true;
+  const pendingTag = OFFLINE.hasPendingPayment(b['Borrower ID']) ? ' <span class="pending-tag" title="A payment for this borrower is saved on this device and waiting to sync — balance updates after sync">payment pending sync</span>' : '';
   const nameCell = indented
-    ? `<span style="padding-left:22px;color:var(--muted);">↳ ${b['Last Name']}, ${b['First Name']}</span>`
-    : `${b['Last Name']}, ${b['First Name']}`;
+    ? `<span style="padding-left:22px;color:var(--muted);">↳ ${b['Last Name']}, ${b['First Name']}</span>${pendingTag}`
+    : `${b['Last Name']}, ${b['First Name']}${pendingTag}`;
   return `
     <tr style="${indented ? 'background:#F7FAFB;' : ''}">
       <td>${showId ? formatBorrowerId(b) : ''}</td>
@@ -143,7 +144,9 @@ function computeNextBorrowerId(){
   const prefix = String(year);
   const existing = (STATE?.borrowers||[]).map(b => String(b['Borrower ID'])).filter(id => id.startsWith(prefix));
   let maxSeq = 0;
-  existing.forEach(id => { const seq = parseInt(id.slice(prefix.length), 10); if(!isNaN(seq) && seq > maxSeq) maxSeq = seq; });
+  // IDs already given to borrowers added offline (not synced yet) must be skipped too.
+  existing.concat(OFFLINE.reservedBorrowerIds().filter(id => id.startsWith(prefix)))
+    .forEach(id => { const seq = parseInt(id.slice(prefix.length), 10); if(!isNaN(seq) && seq > maxSeq) maxSeq = seq; });
   return prefix + String(maxSeq + 1).padStart(3, '0');
 }
 
@@ -347,7 +350,7 @@ document.getElementById('borrowerForm').addEventListener('submit', async (e)=>{
   try{
     const out = await postAction('addBorrower', {data});
     if(out){
-      showToast('Borrower added successfully.');
+      showToast(out.queued ? SAVED_OFFLINE_MSG : 'Borrower added successfully.');
       if(data['Loan Type'] === 'Add-on Diminishing' || data['Loan Type'] === 'Amortized Loan'){
         showAddOnDiminishingNotice(data);
       }
@@ -388,7 +391,8 @@ document.getElementById('editForm').addEventListener('submit', async (e)=>{
   try{
     const data = Object.fromEntries(new FormData(e.target));
     if(editingRow) data._row = editingRow;
-    if(await postAction('updateBorrower', {data})){ closeModal('editModal'); loadData(); }
+    const out = await postAction('updateBorrower', {data});
+    if(out){ if(out.queued) showToast(SAVED_OFFLINE_MSG); closeModal('editModal'); loadData(); }
   } finally { btn.disabled = false; }
 });
 
@@ -606,17 +610,22 @@ function selectCoBorrowerHousehold(borrowerId, name){
 }
 
 async function showSOA(id, loanType, row){
-  let soa;
+  let soa, cachedAt = null;
   if(!API_URL){
     const b = SAMPLE.borrowers.find(x=>x['Borrower ID']===id) || SAMPLE.borrowers[0];
     soa = {soaNo:'SOA-DEMO', dateGenerated: new Date().toISOString().slice(0,10), borrower:b, computed:b,
            payments: SAMPLE.payments.filter(p=>p['Borrower ID']===id)};
   } else {
-    const res = await fetch(API_URL + '?action=soa&id=' + id + (loanType ? '&loanType=' + encodeURIComponent(loanType) : '') + (row ? '&row=' + row : ''));
-    soa = await res.json();
+    const url = API_URL + '?action=soa&id=' + id + (loanType ? '&loanType=' + encodeURIComponent(loanType) : '') + (row ? '&row=' + row : '');
+    const got = await OFFLINE.fetchSOA(url, [id, loanType || '', row || ''].join('|'));
+    if(got.missing){ alert('This Statement of Account is not saved on this device yet. Open it once while online and it will be available offline.'); return; }
+    soa = got.soa;
     if(soa.error){ alert(soa.error); return; }
+    cachedAt = got.cachedAt;
   }
-  document.getElementById('soaContent').innerHTML = buildSOAHTML(soa);
+  document.getElementById('soaContent').innerHTML =
+    (cachedAt ? `<div class="note no-print">Offline — this is the copy saved on ${new Date(cachedAt).toLocaleString()}. It may not include recent entries.</div>` : '')
+    + buildSOAHTML(soa);
   openModal('soaModal');
 }
 

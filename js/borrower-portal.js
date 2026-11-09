@@ -11,7 +11,14 @@
 
 let BORROWER_SESSION = null; // {username, borrowerId, firstName, lastName, mustChangePassword}
 
+// Borrower login is switched off for now (see BORROWER_PORTAL_ENABLED in api.js).
+if(!BORROWER_PORTAL_ENABLED){
+  const sw = document.getElementById('loginModeSwitch');
+  if(sw) sw.style.display = 'none';
+}
+
 function setLoginMode(mode){
+  if(!BORROWER_PORTAL_ENABLED) mode = 'staff';
   const staffBtn = document.getElementById('loginModeStaffBtn');
   const borrowerBtn = document.getElementById('loginModeBorrowerBtn');
   const staffForm = document.getElementById('loginForm');

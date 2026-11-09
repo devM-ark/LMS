@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Automated Loan Monitoring System - devM-ark</title>
 <link rel="icon" type="image/png" href="favicon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#00638E">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Loan Monitor">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="stylesheet" href="css/layout.css">
 <link rel="stylesheet" href="css/components.css">
@@ -16,7 +22,7 @@
   <div class="login-box">
     <h1>Automated Loan Monitoring System</h1>
     <div class="tag">Manalo's Lending Company — Sign in</div>
-    <div style="display:flex;gap:8px;margin:14px 0;">
+    <div id="loginModeSwitch" style="display:flex;gap:8px;margin:14px 0;">
       <button type="button" id="loginModeStaffBtn" class="btn small" onclick="setLoginMode('staff')" style="flex:1;">Staff Login</button>
       <button type="button" id="loginModeBorrowerBtn" class="btn small ghost" onclick="setLoginMode('borrower')" style="flex:1;">Borrower Login</button>
     </div>
@@ -33,6 +39,8 @@
       <button class="btn gold" type="submit">Sign In</button>
       <div class="err" id="loginErr"></div>
     </form>
+    <button type="button" class="btn small ghost install-app-btn" style="display:none;width:100%;margin-top:12px;">Install this app on your device</button>
+    <div class="note" id="iosInstallHint" style="display:none;margin-top:12px;">To install on iPhone / iPad: tap the Share button, then "Add to Home Screen".</div>
     <form class="stack" id="borrowerLoginForm" style="padding:0;border:none;display:none;">
       <label>Username<input name="username" required autocomplete="username"></label>
       <label>Password
@@ -104,10 +112,12 @@
       </div>
     </div>
     <div class="whoami">
+      <button type="button" class="install-app-btn btn small ghost" style="display:none;">Install app</button>
       <button id="whoamiText" class="whoami-btn" title="Edit username/password"></button>
       <button id="logoutBtn">Sign out</button>
     </div>
   </header>
+  <div id="offlineBar" class="offline-bar" style="display:none;cursor:pointer;" title="Tap to review"></div>
 
   <main>
     <section id="tab-home" class="active">
@@ -178,7 +188,7 @@
       <div class="reports-grid">
         <div class="reports-col-header">Summary of Borrowers</div>
         <div class="reports-col-header">Summary of Collections</div>
-        <label class="stack-label rf-group">Group
+        <label class="stack-label rf-group">Cutoff Schedule
           <select name="Group" form="reportFilterForm" id="reportGroupSelect">
             <option value="Teachers">Teachers</option>
             <option value="Tiaong">Tiaong</option>
@@ -311,7 +321,7 @@
       <h2 class="section-title">Company</h2>
       <form class="stack" id="companyForm">
         <label>Company Name<input name="CompanyName"></label>
-        <label>Logo URL<input name="LogoUrl" placeholder=" "></label>
+        <label>Logo URL<input name="LogoUrl" placeholder="https://... (hosted image link)"></label>
         <div class="note">Just paste the direct image link here.</div>
         <button class="btn gold" type="submit">Save Company Settings</button>
         <div class="err" id="companyErr"></div>
@@ -703,14 +713,25 @@
   </div>
 </div>
 
-<script src="js/utilities.js?v=20261005"></script>
-<script src="js/api.js?v=20261005"></script>
-<script src="js/navigation.js?v=20261005"></script>
-<script src="js/borrowers.js?v=20261005"></script>
-<script src="js/payments.js?v=20261005"></script>
-<script src="js/reports.js?v=20261005"></script>
-<script src="js/settings.js?v=20261005"></script>
-<script src="js/borrower-portal.js?v=20261005"></script>
-<script src="js/app.js?v=20261005"></script>
+<div class="modal-backdrop" id="syncModal">
+  <div class="modal" style="max-width:520px;">
+    <button class="modal-close" onclick="closeModal('syncModal')"><svg viewBox="0 0 24 24"><path d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/></svg></button>
+    <h3>Saved on this device</h3>
+    <div class="note" style="margin-bottom:10px;">These entries were made while offline or on a weak connection. They are sent to the system automatically and in order. Nothing is lost if you close the app.</div>
+    <div id="syncModalBody"></div>
+  </div>
+</div>
+
+<script src="js/utilities.js?v=20261006"></script>
+<script src="js/offline.js?v=20261006"></script>
+<script src="js/api.js?v=20261006"></script>
+<script src="js/navigation.js?v=20261006"></script>
+<script src="js/borrowers.js?v=20261006"></script>
+<script src="js/payments.js?v=20261006"></script>
+<script src="js/reports.js?v=20261006"></script>
+<script src="js/settings.js?v=20261006"></script>
+<script src="js/borrower-portal.js?v=20261006"></script>
+<script src="js/app.js?v=20261006"></script>
+<script src="js/pwa.js?v=20261006"></script>
 </body>
 </html>
