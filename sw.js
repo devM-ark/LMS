@@ -8,7 +8,7 @@
  * When you deploy a new version of the app, change VERSION below so every
  * device picks up the new files.
  */
-const VERSION = 'v20261006';
+const VERSION = 'v20261007';
 const CACHE = 'loan-monitor-' + VERSION;
 const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 
