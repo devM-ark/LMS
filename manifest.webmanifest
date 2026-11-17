@@ -1,5 +1,5 @@
 {
-  "name": "Loan Monitoring System",
+  "name": "Manalo's Lending Company — Loan Monitoring",
   "short_name": "Loan Monitor",
   "description": "Loan monitoring system for Manalo's Lending Company. Works offline and syncs when you are back online.",
   "start_url": "./",

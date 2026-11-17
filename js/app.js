@@ -175,14 +175,13 @@ function render(){
   });
   document.getElementById('dOutstanding').textContent = fmt(outstanding);
   document.getElementById('dCollected').textContent = fmt(collected);
+  document.getElementById('dPrevCollectible').textContent = fmt(STATE.prevMonthsCollectible);
   document.getElementById('dMonthCollectible').textContent = fmt(STATE.monthCollectible);
   document.getElementById('dMonthCollected').textContent = fmt(STATE.monthCollected);
   document.getElementById('dUnpaid').textContent = fmt(STATE.totalUnpaid);
-  document.getElementById('dMonthUnpaid').textContent = fmt(STATE.monthUnpaid);
   if(STATE.monthLabel){
     document.getElementById('dMonthCollectibleLabel').textContent = 'Total Collectibles for ' + STATE.monthLabel;
     document.getElementById('dMonthCollectedLabel').textContent = 'Total Collected for ' + STATE.monthLabel;
-    document.getElementById('dMonthUnpaidLabel').textContent = 'Total Unpaid for ' + STATE.monthLabel;
   }
   document.getElementById('dActive').textContent = borrowers.filter(b => (b.status !== 'Paid' && b.status !== 'Renewed')).length;
   document.getElementById('dPastDue').textContent = (counts['Past Due']||0) + (counts['Partially Paid']||0);

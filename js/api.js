@@ -23,7 +23,7 @@ const SAMPLE = {
     {LoanTypeKey:"REG-20000", LoanType:"Regular Loan", AmountTier:20000, AddOnRate:"", TermMonths:12},
   ],
   settings: { CompanyName: "Manalo's Lending Corporation", LogoUrl: "" },
-  monthLabel: "This Month", monthCollectible: 12500, monthCollected: 8000, totalUnpaid: 15750, monthUnpaid: 4500
+  monthLabel: "This Month", prevMonthsCollectible: 3250, monthCollectible: 12500, monthCollected: 8000, totalUnpaid: 15750
 };
 
 

@@ -25,9 +25,19 @@
     try { await deferred.userChoice; } catch(err){}
     deferred = null; buttons().forEach(x => x.style.display = 'none');
   });
-  if(/iphone|ipad|ipod/i.test(navigator.userAgent) && !standalone){
-    const hint = document.getElementById('iosInstallHint'); if(hint) hint.style.display = '';
+  // Safari has no install button event, so show the steps instead (iPhone/iPad and Mac Safari).
+  const ua = navigator.userAgent;
+  const isIOS = /iphone|ipad|ipod/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1); // iPadOS reports as a Mac
+  const isMacSafari = !isIOS && /Macintosh/.test(ua) && /Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua);
+  const hint = document.getElementById('iosInstallHint');
+  if(hint && !standalone && (isIOS || isMacSafari)){
+    hint.textContent = isIOS
+      ? 'To install on iPhone / iPad: open this page in Safari, tap the Share button, then "Add to Home Screen". Open the installed app once while online and sign in.'
+      : 'To install on Mac: in Safari choose File → Add to Dock. Open the installed app once while online and sign in.';
+    hint.style.display = '';
   }
+  // Ask the browser not to clear this app's saved data when the device is low on space.
+  if(navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
 
   window.addEventListener('online', () => { OFFLINE.renderBar(); if(typeof SESSION !== 'undefined' && SESSION && typeof loadData === 'function') loadData(); });
   window.addEventListener('offline', () => {
